@@ -1,4 +1,21 @@
 /* You can add global styles to this file, and also import other style files */
 
-html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+html,
+body {
+  height: 100%;
+  .goldman-regular {
+    font-family: "Goldman", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+  }
+
+  .goldman-bold {
+    font-family: "Goldman", sans-serif;
+    font-weight: 700;
+    font-style: normal;
+  }
+}
+body {
+  margin: 0;
+  font-family: "Goldman", sans-serif;
+}
