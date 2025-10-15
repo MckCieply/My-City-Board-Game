@@ -1,0 +1,101 @@
+// Custom Theming for Angular Material
+// For more information: https://material.angular.io/guide/theming
+@use '@angular/material' as mat;
+
+// --- FONT IMPORT REMINDER ---
+// Make sure to import your chosen font in your 'index.html' file. For the 'Goldman' font:
+/*
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Goldman&display=swap" rel="stylesheet">
+*/
+
+// Include the common styles for Angular Material. We include this here so that you only
+// have to load a single css file for Angular Material in your app.
+// Be sure that you only ever include this mixin once!
+@include mat.core();
+
+// --- CYBERPUNK THEME PALETTES ---
+
+// Primary Palette: Dark, gritty base (e.g., deep dark blue/purple)
+$cyberpunk-primary-shades: (
+  50 : #ECEFF1,
+  100 : #C8D6DB,
+  200 : #9FBCC6,
+  300 : #76A1AE,
+  400 : #598F9D,
+  500 : #3C7C8B, // Main dark base color
+  600 : #357280,
+  700 : #2C6672,
+  800 : #235A64,
+  900 : #174850,
+  A100 : #8DF9FF,
+  A200 : #5AFFFD,
+  A400 : #27FEF8,
+  A700 : #14EDEA,
+  contrast: (
+    50 : #000000,
+    100 : #000000,
+    200 : #000000,
+    300 : #000000,
+    400 : #ffffff,
+    500 : #ffffff, // Contrast text color for the main base
+    600 : #ffffff,
+    700 : #ffffff,
+    800 : #ffffff,
+    900 : #ffffff,
+    A100 : #000000,
+    A200 : #000000,
+    A400 : #000000,
+    A700 : #000000,
+  )
+);
+$cyberpunk-primary: mat.define-palette($cyberpunk-primary-shades, 500);
+
+// Accent Palette: Vibrant neon color (e.g., electric blue/cyan)
+$cyberpunk-accent: mat.define-palette(mat.$cyan-palette, A200, A100, A400);
+
+// Warn Palette: A contrasting, aggressive color (e.g., neon red/orange)
+$cyberpunk-warn: mat.define-palette(mat.$red-palette, A400, A200, A700);
+
+
+// --- TYPOGRAPHY CONFIGURATION (FIXED) ---
+$cyberpunk-typography: mat.define-typography-config(
+  $font-family: 'Goldman, sans-serif',
+    // Using the new, correct typography keys for MDC-based Angular Material
+  $headline-4: mat.define-typography-level(3.5rem, 4rem, 400),       // This replaces the old '$headline'
+  $headline-5: mat.define-typography-level(2rem, 2.5rem, 400),       // This replaces the old '$title'
+  $subtitle-2: mat.define-typography-level(1.25rem, 1.5rem, 400),   // This replaces the old '$subheading-2'
+  $body-1:     mat.define-typography-level(1rem, 1.5rem, 400)        // '$body-1' is still a valid key
+);
+
+// --- DENSITY CONFIGURATION ---
+// Density can be 0 (default) or negative for denser, or positive for more spaced out.
+$cyberpunk-density: 0;
+
+// Create the **DARK** theme object for a true cyberpunk feel.
+$cyberpunk-game-theme: mat.define-dark-theme((
+  color: (
+    primary: $cyberpunk-primary,
+    accent: $cyberpunk-accent,
+    warn: $cyberpunk-warn,
+  ),
+  typography: $cyberpunk-typography,
+  density: $cyberpunk-density
+));
+
+// Include theme styles for core and each component used in your app.
+@include mat.all-component-themes($cyberpunk-game-theme);
+
+// --- GLOBAL BODY STYLES FOR A DARK BACKGROUND ---
+// This ensures your entire page background matches the dark theme.
+html, body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: mat.get-color-from-palette($cyberpunk-primary, 900); // A very dark shade
+  color: mat.get-color-from-palette($cyberpunk-accent, A100); // Light accent color for default text
+  font-family: 'Goldman', sans-serif;
+}
