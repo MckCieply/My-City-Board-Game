@@ -1,0 +1,16 @@
+.app {
+  &_container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  &_header {
+    flex: 0 0 auto;
+  }
+
+  &_board {
+    flex: 1 1 auto;
+    height: 100%;
+  }
+}
