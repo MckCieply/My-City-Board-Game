@@ -1,0 +1,50 @@
+/*
+  These styles now use the CSS variables defined in your global styles.scss
+  The 'Goldman' font is also set globally in styles.scss
+*/
+
+.main-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100%;
+}
+
+.board-container {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr); /* Creates 5 columns */
+  gap: 0.5rem;
+  padding: 1rem;
+  background-color: var(--board-bg-color);
+  border-radius: 0.5rem;
+  border: 2px solid var(--board-border-color);
+  box-shadow: 0 0 15px 5px rgba(100, 255, 218, 0.3);
+}
+
+.cell {
+  /* Sizing */
+  width: 6rem;
+  height: 6rem;
+
+  /* Colors and borders from CSS variables */
+  background-color: var(--cell-bg-color);
+  border-radius: 0.25rem;
+  border: 2px solid var(--cell-border-color);
+  color: var(--cell-text-color);
+
+  /* Content alignment */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  /* Text styling */
+  box-sizing: border-box;
+  transition: all 0.2s ease-in-out;
+
+  /* This is the SCSS way to write the hover effect */
+  &:hover {
+    background-color: var(--cell-bg-hover);
+    cursor: pointer;
+    transform: scale(1.05);
+  }
+}

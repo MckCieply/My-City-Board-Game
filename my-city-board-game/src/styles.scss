@@ -1,0 +1,29 @@
+/* 1. Import the custom theme file. 
+   This file now contains all theme-dependent global styles.
+*/
+@import "./cyberpunk-theme.scss";
+
+/* NOTE: The global 'body' and ':root' styles have been moved to
+  'cyberpunk-theme.scss'.
+
+  WHY? The '@use "@angular/material" as mat;' rule in that file 
+  only makes the 'mat' namespace available *within* that file. 
+  This 'styles.scss' file doesn't know what 'mat' is, 
+  which caused the error.
+*/
+
+/* 4. Define your font classes (these are fine here as they 
+   don't depend on the 'mat' namespace)
+*/
+
+.goldman-regular {
+  font-family: "Goldman", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.goldman-bold {
+  font-family: "Goldman", sans-serif;
+  font-weight: 700;
+  font-style: normal;
+}
