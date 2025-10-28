@@ -1,0 +1,11 @@
+<div class="main-container">
+  <div class="board-container">
+    @for (row of board(); track $index) {
+      @for (cell of row; track $index) {
+        <div class="cell">
+          {{ cell }}
+        </div>
+      }
+    }
+  </div>
+</div>
