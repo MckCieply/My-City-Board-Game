@@ -1,8 +1,11 @@
 <div class="app_container">
   <div class="app_header">
-    <app-header />
+    <app-header (buttonClicked)="buildingSelected($event)" />
   </div>
   <div class="app_board">
-    <app-game-board />
+    <app-game-board
+      [isBuildingSelected]="!!currentBuilding()"
+      [buildingSelected]="currentBuilding()"
+    />
   </div>
 </div>

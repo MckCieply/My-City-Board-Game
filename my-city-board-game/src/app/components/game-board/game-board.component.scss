@@ -42,9 +42,27 @@
   transition: all 0.2s ease-in-out;
 
   /* This is the SCSS way to write the hover effect */
-  &:hover {
+
+  &:not(.disabled):hover {
     background-color: var(--cell-bg-hover);
     cursor: pointer;
     transform: scale(1.05);
+  }
+
+  /* NEW: This class is applied when isBuildingSelected is false.
+      It overrides the default styles to show a disabled state.
+    */
+  &.disabled {
+    background-color: var(--cell-disabled-bg);
+    color: var(--cell-disabled-text);
+    border-color: var(--cell-bg-color);
+  }
+
+  /* NEW: This ensures that even when hovering over a disabled cell,
+      the hover styles do not apply.
+    */
+  &.disabled:hover {
+    background-color: var(--cell-disabled-bg);
+    transform: none;
   }
 }

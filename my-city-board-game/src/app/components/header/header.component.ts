@@ -1,7 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, output } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { LucideAngularModule } from 'lucide-angular';
+import { Buildings } from '../../models/buildings.model';
 @Component({
   selector: 'app-header',
   standalone: true,
@@ -9,4 +10,11 @@ import { LucideAngularModule } from 'lucide-angular';
   templateUrl: './header.component.html',
   styleUrl: './header.component.scss',
 })
-export class HeaderComponent {}
+export class HeaderComponent {
+  Buildings = Buildings;
+  buttonClicked = output<Buildings>();
+
+  onButtonClicked(action: Buildings): void {
+    this.buttonClicked.emit(action);
+  }
+}

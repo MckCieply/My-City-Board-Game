@@ -1,9 +1,15 @@
 <div class="main-container">
   <div class="board-container">
-    @for (row of board(); track $index) {
-      @for (cell of row; track $index) {
-        <div class="cell">
-          {{ cell }}
+    @for (row of board(); track $rowIndex; let $rowIndex = $index) {
+      @for (cell of row; track $colIndex; let $colIndex = $index) {
+        <div
+          class="cell"
+          [class.disabled]="!isBuildingSelected()"
+          (click)="handleCellClick($rowIndex, $colIndex)"
+        >
+          @if (cell) {
+            <lucide-icon [name]="cell" />
+          }
         </div>
       }
     }
