@@ -1,6 +1,19 @@
 <div class="main-container">
-  <div class="board-container">
+  <div class="board-wrapper">
+    <!-- Empty corner cell -->
+    <div class="label-corner"></div>
+
+    <!-- Column labels (top) -->
+    @for (colLabel of colLabels; track $index) {
+      <div class="label-col">{{ colLabel }}</div>
+    }
+
+    <!-- Row labels and cells -->
     @for (row of board(); track $rowIndex; let $rowIndex = $index) {
+      <!-- Row label (left) -->
+      <div class="label-row">{{ rowLabels[$rowIndex] }}</div>
+
+      <!-- Cells for this row -->
       @for (cell of row; track $colIndex; let $colIndex = $index) {
         <div
           class="cell"
