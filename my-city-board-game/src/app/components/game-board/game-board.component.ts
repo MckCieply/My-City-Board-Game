@@ -19,7 +19,11 @@ export class GameBoardComponent {
 
   //TODO: Move to config
   private readonly rows = 5;
-  private readonly cols = 5;
+  private readonly cols = 6;
+
+  // Labels for rows and columns
+  readonly rowLabels = ['(3, 4)', '(5, 6)', '(7)', '(8, 9)', '(10, 11)'];
+  readonly colLabels = ['1', '2', '3', '4', '5', '6'];
 
   board = signal<Board>(this.createEmptyBoard(this.rows, this.cols));
 

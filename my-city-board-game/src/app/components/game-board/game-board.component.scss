@@ -10,15 +10,41 @@
   min-height: 100%;
 }
 
-.board-container {
+.board-wrapper {
   display: grid;
-  grid-template-columns: repeat(5, 1fr); /* Creates 5 columns */
+  grid-template-columns: auto repeat(6, 1fr); /* Label column + 5 game columns */
+  grid-template-rows: auto repeat(5, 1fr); /* Label row + 5 game rows */
   gap: 0.5rem;
   padding: 1rem;
   background-color: var(--board-bg-color);
   border-radius: 0.5rem;
   border: 2px solid var(--board-border-color);
   box-shadow: 0 0 15px 5px rgba(100, 255, 218, 0.3);
+}
+
+.label-corner {
+  /* Empty space in top-left corner */
+  width: 2rem;
+  height: 2rem;
+}
+
+.label-col,
+.label-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: var(--cell-border-color);
+  text-shadow: 0 0 5px rgba(100, 255, 218, 0.5);
+}
+
+.label-col {
+  height: 2rem;
+}
+
+.label-row {
+  width: 5rem;
 }
 
 .cell {
@@ -41,26 +67,18 @@
   box-sizing: border-box;
   transition: all 0.2s ease-in-out;
 
-  /* This is the SCSS way to write the hover effect */
-
   &:not(.disabled):hover {
     background-color: var(--cell-bg-hover);
     cursor: pointer;
     transform: scale(1.05);
   }
 
-  /* NEW: This class is applied when isBuildingSelected is false.
-      It overrides the default styles to show a disabled state.
-    */
   &.disabled {
     background-color: var(--cell-disabled-bg);
     color: var(--cell-disabled-text);
     border-color: var(--cell-bg-color);
   }
 
-  /* NEW: This ensures that even when hovering over a disabled cell,
-      the hover styles do not apply.
-    */
   &.disabled:hover {
     background-color: var(--cell-disabled-bg);
     transform: none;
