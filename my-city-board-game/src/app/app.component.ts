@@ -15,7 +15,7 @@ import { Buildings } from './models/buildings.model';
 export class AppComponent {
   title = 'my-city-board-game';
 
-  currentRoll = signal<number | null>(null);
+  currentRolls = signal<number[] | null>(null);
   currentBuilding = signal<Buildings | undefined>(undefined);
 
   buildingSelected(building: Buildings): void {

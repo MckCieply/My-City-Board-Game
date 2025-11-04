@@ -1,23 +1,7 @@
-// Custom Theming for Angular Material
-// For more information: https://material.angular.io/guide/theming
 @use "@angular/material" as mat;
 
-// --- FONT IMPORT REMINDER ---
-// Make sure to import your chosen font in your 'index.html' file. For the 'Goldman' font:
-/*
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Goldman&display=swap" rel="stylesheet">
-*/
-
-// Include the common styles for Angular Material. We include this here so that you only
-// have to load a single css file for Angular Material in your app.
-// Be sure that you only ever include this mixin once!
 @include mat.core();
 
-// --- CYBERPUNK THEME PALETTES ---
-
-// Primary Palette: Dark, gritty base (e.g., deep dark blue/purple)
 $cyberpunk-primary-shades: (
   50: #eceff1,
   100: #c8d6db,
@@ -25,7 +9,6 @@ $cyberpunk-primary-shades: (
   300: #76a1ae,
   400: #598f9d,
   500: #3c7c8b,
-  // Main dark base color
   600: #357280,
   700: #2c6672,
   800: #235a64,
@@ -41,7 +24,6 @@ $cyberpunk-primary-shades: (
     300: #000000,
     400: #ffffff,
     500: #ffffff,
-    // Contrast text color for the main base
     600: #ffffff,
     700: #ffffff,
     800: #ffffff,
@@ -52,32 +34,24 @@ $cyberpunk-primary-shades: (
     A700: #000000,
   ),
 );
-$cyberpunk-primary: mat.define-palette($cyberpunk-primary-shades, 500);
+$cyberpunk-bg-primary: mat.define-palette($cyberpunk-primary-shades, 500);
+$cyberpunk-bg-accent: mat.define-palette(mat.$cyan-palette, A200, A100, A400);
 
-// Accent Palette: Vibrant neon color (e.g., electric blue/cyan)
-$cyberpunk-accent: mat.define-palette(mat.$cyan-palette, A200, A100, A400);
-
-// Warn Palette: A contrasting, aggressive color (e.g., neon red/orange)
+$cyberpunk-primary: mat.define-palette(mat.$deep-purple-palette, 700, 500, 900);
+$cyberpunk-accent: mat.define-palette(mat.$pink-palette, A200, A100, A400);
 $cyberpunk-warn: mat.define-palette(mat.$red-palette, A400, A200, A700);
+$cyberpunk-success: mat.define-palette(mat.$green-palette, A400, A200, A700);
 
-// --- TYPOGRAPHY CONFIGURATION (FIXED) ---
 $cyberpunk-typography: mat.define-typography-config(
   $font-family: "Goldman, sans-serif",
-  // Using the new, correct typography keys for MDC-based Angular Material
   $headline-4: mat.define-typography-level(3.5rem, 4rem, 400),
-  // This replaces the old '$headline'
   $headline-5: mat.define-typography-level(2rem, 2.5rem, 400),
-  // This replaces the old '$title'
   $subtitle-2: mat.define-typography-level(1.25rem, 1.5rem, 400),
-  // This replaces the old '$subheading-2'
-  $body-1: mat.define-typography-level(1rem, 1.5rem, 400), // '$body-1' is still a valid key
+  $body-1: mat.define-typography-level(1rem, 1.5rem, 400),
 );
 
-// --- DENSITY CONFIGURATION ---
-// Density can be 0 (default) or negative for denser, or positive for more spaced out.
 $cyberpunk-density: 0;
 
-// Create the **DARK** theme object for a true cyberpunk feel.
 $cyberpunk-game-theme: mat.define-dark-theme(
   (
     color: (
@@ -90,28 +64,24 @@ $cyberpunk-game-theme: mat.define-dark-theme(
   )
 );
 
-// Include theme styles for core and each component used in your app.
 @include mat.all-component-themes($cyberpunk-game-theme);
 
-// --- GLOBAL STYLES MOVED HERE ---
-
-/* 3. Define global CSS variables for your components to use.
-   Moved here from styles.scss because it needs the 'mat' namespace.
-*/
 :root {
-  --board-bg-color: #{mat.get-color-from-palette($cyberpunk-primary, 500)};
-  --board-border-color: #{mat.get-color-from-palette($cyberpunk-accent, A200)};
-  --cell-bg-color: #{mat.get-color-from-palette($cyberpunk-primary, 50)};
-  --cell-bg-hover: #{mat.get-color-from-palette($cyberpunk-primary, 100)};
-  --cell-border-color: #{mat.get-color-from-palette($cyberpunk-accent, A200)};
+  --board-bg-color: #{mat.get-color-from-palette($cyberpunk-bg-primary, 500)};
+  --board-border-color: #{mat.get-color-from-palette(
+      $cyberpunk-bg-accent,
+      A200
+    )};
+  --cell-bg-color: #{mat.get-color-from-palette($cyberpunk-bg-primary, 50)};
+  --cell-bg-hover: #{mat.get-color-from-palette($cyberpunk-bg-primary, 100)};
+  --cell-border-color: #{mat.get-color-from-palette($cyberpunk-bg-accent, A200)};
   --cell-text-color: #{mat.get-color-from-palette(
-      $cyberpunk-primary,
+      $cyberpunk-bg-primary,
       "50-contrast"
     )};
-  --app-bg-color: #{mat.get-color-from-palette($cyberpunk-primary, 900)};
+  --app-bg-color: #{mat.get-color-from-palette($cyberpunk-bg-primary, 900)};
 }
 
-// This ensures your entire page background matches the dark theme.
 html,
 body {
   height: 100%;
@@ -119,13 +89,123 @@ body {
 
 body {
   margin: 0;
-  background-color: mat.get-color-from-palette(
-    $cyberpunk-primary,
-    900
-  ); // A very dark shade
-  color: mat.get-color-from-palette(
-    $cyberpunk-accent,
-    A100
-  ); // Light accent color for default text
+  background-color: mat.get-color-from-palette($cyberpunk-bg-primary, 900);
+  color: mat.get-color-from-palette($cyberpunk-bg-accent, A100);
   font-family: "Goldman", sans-serif;
+}
+
+.mat-mdc-button-base {
+  font-family: "Goldman", sans-serif;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.2s ease-in-out;
+  border-width: 2px;
+}
+
+.mat-mdc-raised-button.mat-accent,
+.mat-mdc-flat-button.mat-accent,
+.mat-mdc-fab.mat-accent,
+.mat-mdc-mini-fab.mat-accent {
+  &:not(:disabled):hover,
+  &:not(:disabled):focus {
+    box-shadow: 0 0 14px 3px
+      #{mat.get-color-from-palette($cyberpunk-accent, A200)};
+    background-color: #{mat.get-color-from-palette($cyberpunk-accent, A400)};
+  }
+}
+
+.mat-mdc-raised-button.mat-warn,
+.mat-mdc-flat-button.mat-warn,
+.mat-mdc-fab.mat-warn,
+.mat-mdc-mini-fab.mat-warn {
+  &:not(:disabled):hover,
+  &:not(:disabled):focus {
+    box-shadow: 0 0 14px 3px
+      #{mat.get-color-from-palette($cyberpunk-warn, A400)};
+    background-color: #{mat.get-color-from-palette($cyberpunk-warn, A700)};
+  }
+}
+
+.mat-mdc-raised-button.mat-primary,
+.mat-mdc-flat-button.mat-primary,
+.mat-mdc-fab.mat-primary,
+.mat-mdc-mini-fab.mat-primary {
+  &:not(:disabled):hover,
+  &:not(:disabled):focus {
+    box-shadow: 0 0 12px 2px
+      #{mat.get-color-from-palette($cyberpunk-accent, A100)};
+    background-color: #{mat.get-color-from-palette($cyberpunk-primary, 500)};
+  }
+}
+
+.mat-mdc-raised-button.mat-success,
+.mat-mdc-flat-button.mat-success,
+.mat-mdc-fab.mat-success,
+.mat-mdc-mini-fab.mat-success {
+  background-color: #{mat.get-color-from-palette($cyberpunk-success, A400)};
+  color: #{mat.get-color-from-palette($cyberpunk-success, "A400-contrast")};
+
+  &:not(:disabled):hover,
+  &:not(:disabled):focus {
+    box-shadow: 0 0 14px 3px
+      #{mat.get-color-from-palette($cyberpunk-success, A400)};
+    background-color: #{mat.get-color-from-palette($cyberpunk-success, A700)};
+  }
+}
+
+.mat-mdc-stroked-button {
+  &:not(:disabled):hover,
+  &:not(:disabled):focus {
+    &.mat-accent {
+      background-color: #{mat.get-color-from-palette($cyberpunk-accent, A200)};
+      color: #{mat.get-color-from-palette($cyberpunk-accent, "A200-contrast")};
+      text-shadow: 0 0 6px
+        #{mat.get-color-from-palette($cyberpunk-accent, "A200-contrast")};
+    }
+    &.mat-warn {
+      background-color: #{mat.get-color-from-palette($cyberpunk-warn, A400)};
+      color: #{mat.get-color-from-palette($cyberpunk-warn, "A400-contrast")};
+      text-shadow: 0 0 6px
+        #{mat.get-color-from-palette($cyberpunk-warn, "A400-contrast")};
+    }
+    &.mat-primary {
+      background-color: #{mat.get-color-from-palette($cyberpunk-primary, 700)};
+      color: #{mat.get-color-from-palette($cyberpunk-primary, "700-contrast")};
+    }
+    &.mat-success {
+      background-color: #{mat.get-color-from-palette($cyberpunk-success, A400)};
+      color: #{mat.get-color-from-palette($cyberpunk-success, "A400-contrast")};
+      text-shadow: 0 0 6px
+        #{mat.get-color-from-palette($cyberpunk-success, "A400-contrast")};
+    }
+  }
+}
+
+.mat-mdc-icon-button {
+  &:not(:disabled):hover,
+  &:not(:disabled):focus {
+    &.mat-accent {
+      background-color: rgba(
+        mat.get-color-from-palette($cyberpunk-accent, A200),
+        0.15
+      );
+    }
+    &.mat-warn {
+      background-color: rgba(
+        mat.get-color-from-palette($cyberpunk-warn, A400),
+        0.15
+      );
+    }
+    &.mat-success {
+      background-color: rgba(
+        mat.get-color-from-palette($cyberpunk-success, A400),
+        0.15
+      );
+      color: #{mat.get-color-from-palette($cyberpunk-success, A400)};
+    }
+  }
+  &.mat-success {
+    color: #{mat.get-color-from-palette($cyberpunk-success, A400)};
+  }
 }

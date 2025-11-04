@@ -1,3 +1,16 @@
-<button (click)="rollDice()">Roll Dice</button>
+<div class="dice-container">
+  <button
+    mat-raised-button
+    color="success"
+    (click)="rollDice()"
+    class="roll-button"
+  >
+    Roll Dice
+  </button>
 
-{{ currentRoll ? "You rolled a " + currentRoll : "Click to roll the dice!" }}
+  <div class="roll-output">
+    @if (currentRolls && currentRolls.length > 0) {
+      <h2>You rolled: {{ currentRolls.join(", ") }}</h2>
+    }
+  </div>
+</div>
