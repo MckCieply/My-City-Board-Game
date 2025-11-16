@@ -1,13 +1,33 @@
 <div class="header_container">
-  <button mat-fab (click)="onButtonClicked(Buildings.HOUSE)">
+  <button
+    mat-fab
+    [class.selected]="isSelected(Buildings.HOUSE)"
+    [disabled]="true"
+  >
     <lucide-icon name="house" />
   </button>
 
-  <button mat-fab (click)="onButtonClicked(Buildings.LAKE)">
+  <button
+    mat-fab
+    [class.selected]="isSelected(Buildings.LAKE)"
+    [disabled]="true"
+  >
     <lucide-icon name="waves" />
   </button>
 
-  <button mat-fab (click)="onButtonClicked(Buildings.FOREST)">
+  <button
+    mat-fab
+    [class.selected]="isSelected(Buildings.FOREST)"
+    [disabled]="true"
+  >
     <lucide-icon name="tree-deciduous" />
+  </button>
+
+  <button
+    mat-fab
+    [class.selected]="isSelected(Buildings.SQUARE)"
+    [disabled]="true"
+  >
+    <lucide-icon name="flag-triangle-right" />
   </button>
 </div>

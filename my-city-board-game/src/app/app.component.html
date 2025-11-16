@@ -1,12 +1,16 @@
 <div class="app_container">
   <div class="app_header">
-    <app-dice (diceRolled)="currentRolls.set($event)" />
-    <app-header (buttonClicked)="buildingSelected($event)" />
+    <app-dice (diceRolled)="onDiceRolled($event, gameBoard)" />
+    <app-header
+      (buttonClicked)="buildingSelected($event)"
+      [selectedBuilding]="getCurrentSelectedBuilding()"
+    />
   </div>
   <div class="app_board">
     <app-game-board
-      [isBuildingSelected]="!!currentBuilding()"
-      [buildingSelected]="currentBuilding()"
+      #gameBoard
+      [currentRolls]="currentRolls()"
+      (placementStateChanged)="onPlacementStateChange($event)"
     />
   </div>
 </div>

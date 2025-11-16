@@ -6,6 +6,7 @@ import { routes } from './app.routes';
 
 import {
   Check,
+  FlagTriangleRight,
   House,
   LucideAngularModule,
   Plus,
@@ -18,7 +19,14 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes),
     provideAnimationsAsync(),
     importProvidersFrom(
-      LucideAngularModule.pick({ Plus, Check, House, TreeDeciduous, Waves }),
+      LucideAngularModule.pick({
+        Plus,
+        Check,
+        House,
+        FlagTriangleRight,
+        TreeDeciduous,
+        Waves,
+      }),
     ),
   ],
 };

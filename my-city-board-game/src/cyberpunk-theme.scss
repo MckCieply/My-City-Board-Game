@@ -79,7 +79,24 @@ $cyberpunk-game-theme: mat.define-dark-theme(
       $cyberpunk-bg-primary,
       "50-contrast"
     )};
+  --cell-disabled-bg: #{mat.get-color-from-palette($cyberpunk-bg-primary, 300)};
+  --cell-disabled-text: #{mat.get-color-from-palette(
+      $cyberpunk-bg-primary,
+      600
+    )};
   --app-bg-color: #{mat.get-color-from-palette($cyberpunk-bg-primary, 900)};
+  --bg-color: #{mat.get-color-from-palette($cyberpunk-bg-primary, 900)};
+  --accent-color: #{mat.get-color-from-palette($cyberpunk-bg-accent, A200)};
+  --accent-glow: #{mat.get-color-from-palette($cyberpunk-bg-accent, A200)};
+  --error-color: #{mat.get-color-from-palette($cyberpunk-warn, A400)};
+  --success-color: #{mat.get-color-from-palette($cyberpunk-success, A400)};
+  --primary-color: #{mat.get-color-from-palette($cyberpunk-primary, 700)};
+  --text-color: #{mat.get-color-from-palette($cyberpunk-bg-accent, A100)};
+
+  // Rgba helper colors for transparency effects
+  --accent-rgb: 100, 255, 218;
+  --error-rgb: 255, 23, 68;
+  --success-rgb: 0, 230, 118;
 }
 
 html,

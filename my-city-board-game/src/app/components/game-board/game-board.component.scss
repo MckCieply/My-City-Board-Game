@@ -5,9 +5,23 @@
 
 .main-container {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   min-height: 100%;
+}
+
+.placement-status {
+  margin-bottom: 1rem;
+  text-align: center;
+
+  h3 {
+    color: var(--accent-color);
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin: 0;
+    text-shadow: 0 0 5px rgba(var(--accent-rgb), 0.5);
+  }
 }
 
 .board-wrapper {
@@ -82,5 +96,46 @@
   &.disabled:hover {
     background-color: var(--cell-disabled-bg);
     transform: none;
+  }
+
+  &.clickable {
+    background-color: var(--cell-bg-color);
+    border-color: var(--accent-color);
+    box-shadow: 0 0 10px rgba(var(--accent-rgb), 0.5);
+    cursor: pointer;
+
+    &:hover {
+      background-color: var(--cell-bg-hover);
+      transform: scale(1.05);
+      box-shadow: 0 0 15px rgba(var(--accent-rgb), 0.7);
+    }
+  }
+
+  &.not-allowed {
+    background-color: rgba(var(--error-rgb), 0.1);
+    border-color: rgba(var(--error-rgb), 0.3);
+    cursor: not-allowed;
+
+    &:hover {
+      background-color: rgba(var(--error-rgb), 0.2);
+      transform: none;
+    }
+  }
+
+  &.occupied {
+    background-color: var(--cell-disabled-bg);
+    border-color: var(--cell-disabled-text);
+    cursor: not-allowed;
+    opacity: 0.8;
+
+    &:hover {
+      background-color: var(--cell-disabled-bg);
+      transform: none;
+      cursor: not-allowed;
+    }
+
+    lucide-icon {
+      opacity: 0.9;
+    }
   }
 }

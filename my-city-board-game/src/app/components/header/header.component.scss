@@ -5,5 +5,23 @@
     align-items: end;
     justify-content: center;
     gap: 20px;
+
+    button {
+      &[disabled] {
+        opacity: 0.5;
+        cursor: default;
+
+        &.selected {
+          opacity: 1;
+          background-color: var(--accent-color) !important;
+          box-shadow: 0 0 15px rgba(var(--accent-rgb), 0.8);
+          transform: scale(1.1);
+
+          lucide-icon {
+            color: var(--bg-color) !important;
+          }
+        }
+      }
+    }
   }
 }

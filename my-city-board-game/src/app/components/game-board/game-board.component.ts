@@ -1,6 +1,11 @@
-import { Component, input, signal } from '@angular/core';
+import { Component, input, output, signal } from '@angular/core';
 import { LucideAngularModule } from 'lucide-angular';
-import { Buildings } from '../../models/buildings.model';
+import {
+  Buildings,
+  getBuildingDisplayName,
+  getBuildingFromDice,
+} from '../../models/buildings.model';
+import { PlacementState } from '../../models/placement-state.model';
 
 type Cell = Buildings | null;
 type Board = Cell[][];
@@ -14,8 +19,8 @@ type Board = Cell[][];
 })
 //TODO: Export types
 export class GameBoardComponent {
-  isBuildingSelected = input.required<boolean>();
-  buildingSelected = input<Buildings | undefined>(undefined);
+  currentRolls = input<number[] | null>(null);
+  placementStateChanged = output<PlacementState>();
 
   //TODO: Move to config
   private readonly rows = 5;
@@ -27,28 +32,163 @@ export class GameBoardComponent {
 
   board = signal<Board>(this.createEmptyBoard(this.rows, this.cols));
 
-  handleCellClick(row: number, col: number) {
-    const buildingToPlace = this.buildingSelected();
+  // Track placement state
+  placementState = signal<PlacementState>(PlacementState.FIRST); /**
+   * Resets the placement state when new dice are rolled
+   */
+  resetPlacementState(): void {
+    this.placementState.set(PlacementState.FIRST);
+    this.placementStateChanged.emit(PlacementState.FIRST);
+  }
 
-    if (buildingToPlace === undefined) {
+  /**
+   * Gets the current placement instruction text
+   */
+  getCurrentPlacementText(): string {
+    const rolls = this.currentRolls();
+    const state = this.placementState();
+
+    if (!rolls || rolls.length < 2) {
+      return 'Roll dice to start!';
+    }
+
+    switch (state) {
+      case PlacementState.FIRST:
+        const firstBuilding = this.getBuildingDisplayName(
+          getBuildingFromDice(rolls[1]),
+        );
+        return `First placement: Column ${rolls[0]} - Place ${firstBuilding}`;
+      case PlacementState.SECOND:
+        const secondBuilding = this.getBuildingDisplayName(
+          getBuildingFromDice(rolls[0]),
+        );
+        return `Second placement: Column ${rolls[1]} - Place ${secondBuilding}`;
+      case PlacementState.COMPLETE:
+        return 'Both placements completed! Roll dice for next turn.';
+      default:
+        return '';
+    }
+  }
+
+  /**
+   * Gets a user-friendly display name for a building
+   */
+  private getBuildingDisplayName(building: Buildings): string {
+    return getBuildingDisplayName(building);
+  }
+
+  handleCellClick(row: number, col: number) {
+    const rolls = this.currentRolls();
+    const currentPlacementState = this.placementState();
+    const board = this.board();
+
+    // Check if dice have been rolled
+    if (!rolls || rolls.length < 2) {
       return;
     }
 
+    // Check if we're in complete state (both placements done)
+    if (currentPlacementState === PlacementState.COMPLETE) {
+      return;
+    }
+
+    // Check if cell is already occupied
+    if (board[row][col] !== null) {
+      return;
+    }
+
+    // Determine allowed column and building based on placement state
+    let allowedColumn: number;
+    let columnDice: number;
+    let buildingDice: number;
+    let buildingToPlace: Buildings;
+
+    if (currentPlacementState === PlacementState.FIRST) {
+      // First placement: first die = column, second die = building
+      columnDice = rolls[0];
+      buildingDice = rolls[1];
+      allowedColumn = columnDice - 1;
+      buildingToPlace = getBuildingFromDice(buildingDice);
+    } else {
+      // Second placement: second die = column, first die = building
+      columnDice = rolls[1];
+      buildingDice = rolls[0];
+      allowedColumn = columnDice - 1;
+      buildingToPlace = getBuildingFromDice(buildingDice);
+    }
+
+    if (col !== allowedColumn) {
+      return;
+    }
+
+    // Cell is empty and in correct column: Place the dice-determined building
     this.board.update((currentBoard) => {
       const newBoard = currentBoard.map((r) => [...r]);
+      newBoard[row][col] = buildingToPlace;
 
-      if (newBoard[row][col] === null) {
-        // Cell is empty: Place the selected building
-        newBoard[row][col] = buildingToPlace;
-        console.log(`Placed ${buildingToPlace} at: [${row}, ${col}]`);
+      // Update placement state
+      if (currentPlacementState === PlacementState.FIRST) {
+        this.placementState.set(PlacementState.SECOND);
+        this.placementStateChanged.emit(PlacementState.SECOND);
+        console.log('Now place your second building!');
       } else {
-        // Cell is occupied: Clear it
-        newBoard[row][col] = null;
-        console.log(`Cleared cell at: [${row}, ${col}]`);
+        this.placementState.set(PlacementState.COMPLETE);
+        this.placementStateChanged.emit(PlacementState.COMPLETE);
       }
 
       return newBoard;
     });
+  }
+
+  /**
+   * Checks if a cell is clickable based on the current dice rolls and placement state
+   * @param row The row index to check
+   * @param col The column index to check
+   * @returns true if the cell can be clicked, false otherwise
+   */
+  isCellClickable(row: number, col: number): boolean {
+    const rolls = this.currentRolls();
+    const currentPlacementState = this.placementState();
+    const board = this.board();
+
+    // Must have dice rolled
+    if (!rolls || rolls.length < 2) {
+      return false;
+    }
+
+    // If both placements are complete, no cells are clickable
+    if (currentPlacementState === PlacementState.COMPLETE) {
+      return false;
+    }
+
+    // Cell must be empty
+    if (board[row][col] !== null) {
+      return false;
+    }
+
+    // Determine allowed column based on placement state
+    let allowedColumn: number;
+
+    if (currentPlacementState === PlacementState.FIRST) {
+      // First placement: first die determines column
+      allowedColumn = rolls[0] - 1;
+    } else {
+      // Second placement: second die determines column
+      allowedColumn = rolls[1] - 1;
+    }
+
+    return col === allowedColumn;
+  }
+
+  /**
+   * Checks if a cell is occupied (has a building)
+   * @param row The row index to check
+   * @param col The column index to check
+   * @returns true if the cell is occupied, false otherwise
+   */
+  isCellOccupied(row: number, col: number): boolean {
+    const board = this.board();
+    return board[row][col] !== null;
   }
 
   /**

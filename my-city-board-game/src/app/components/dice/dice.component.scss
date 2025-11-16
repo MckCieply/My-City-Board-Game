@@ -6,13 +6,28 @@
   margin-top: 2rem;
 
   .roll-button {
-    // Material button styles are applied via MatButtonModule
-    // Add any custom overrides here if needed
+    margin-bottom: 0.5rem;
   }
 
   .roll-output {
-    height: 2rem;
     margin-top: 1rem;
     font-size: 1.2rem;
+    text-align: center;
+    color: var(--text-color);
+
+    .dice-info {
+      display: flex;
+      gap: 2rem;
+      margin-top: 0.5rem;
+      font-size: 1rem;
+
+      .die-result {
+        padding: 0.25rem 0.5rem;
+        background-color: rgba(var(--accent-rgb), 0.1);
+        border: 1px solid rgba(var(--accent-rgb), 0.3);
+        border-radius: 0.25rem;
+        color: var(--text-color);
+      }
+    }
   }
 }
