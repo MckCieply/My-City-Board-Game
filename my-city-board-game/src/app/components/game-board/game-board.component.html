@@ -31,6 +31,9 @@
           [class.occupied]="isCellOccupied($rowIndex, $colIndex)"
           (click)="handleCellClick($rowIndex, $colIndex)"
         >
+          @if (getCellPoints($rowIndex, $colIndex) > 0) {
+            <div class="cell-points">{{ getCellPoints($rowIndex, $colIndex) }}</div>
+          }
           @if (cell) {
             <lucide-icon [name]="cell" />
           }

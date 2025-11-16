@@ -33,6 +33,22 @@ export class GameBoardComponent {
 
   board = signal<Board>(this.createEmptyBoard(this.rows, this.cols));
 
+  // Point values for each cell position (row, col)
+  readonly pointMatrix = [
+    [3, 0, 2, 2, 0, 3], // Row 0: (3, 4)
+    [0, 1, 0, 0, 1, 0], // Row 1: (5, 6) 
+    [2, 0, 1, 1, 0, 2], // Row 2: (7)
+    [0, 1, 0, 0, 1, 0], // Row 3: (8, 9)
+    [3, 0, 2, 2, 0, 3]  // Row 4: (10, 11)
+  ];
+
+  /**
+   * Gets the point value for a specific cell
+   */
+  getCellPoints(row: number, col: number): number {
+    return this.pointMatrix[row]?.[col] || 0;
+  }
+
   /**
    * Gets the current placement instruction text
    */
