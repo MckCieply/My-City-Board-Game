@@ -14,7 +14,7 @@
     <!-- Row labels and cells -->
     @for (row of board(); track $rowIndex; let $rowIndex = $index) {
       <!-- Row label (left) -->
-      <div class="label-row">{{ rowLabels[$rowIndex] }}</div>
+      <div class="label-row" [class.scoring-street]="isRowScoringStreet($rowIndex)">{{ rowLabels[$rowIndex] }}</div>
 
       <!-- Cells for this row -->
       @for (cell of row; track $colIndex; let $colIndex = $index) {
@@ -29,6 +29,8 @@
             !isCellOccupied($rowIndex, $colIndex)
           "
           [class.occupied]="isCellOccupied($rowIndex, $colIndex)"
+          [class.scoring-street]="isRowScoringStreet($rowIndex)"
+          [class.scoring-group]="isCellInScoringGroup($rowIndex, $colIndex)"
           (click)="handleCellClick($rowIndex, $colIndex)"
         >
           @if (getCellPoints($rowIndex, $colIndex) > 0) {
@@ -40,5 +42,26 @@
         </div>
       }
     }
+  </div>
+  
+  <!-- Footer scoring grid -->
+  <div class="footer-wrapper">
+    @for (score of footerScores(); track $index) {
+      <div class="footer-cell" 
+           [class.has-score]="score > 0"
+           [class.current-round]="$index === currentRound() - 1 && score === 0">
+        <div class="footer-label">R{{ $index + 1 }}</div>
+        @if (score > 0) {
+          <div class="footer-score">{{ score }}</div>
+        } @else if ($index === currentRound() - 1) {
+          <div class="footer-current">•</div>
+        }
+      </div>
+    }
+    <!-- Total score display -->
+    <div class="total-score-wrapper">
+      <div class="total-label">Total</div>
+      <div class="total-score">{{ getTotalScore() }}</div>
+    </div>
   </div>
 </div>
