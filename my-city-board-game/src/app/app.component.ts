@@ -18,10 +18,23 @@ export class AppComponent {
   currentRolls = signal<number[] | null>(null);
   placementState = signal<PlacementState>(PlacementState.FIRST);
 
-  onDiceRolled(rolls: number[], gameBoard: GameBoardComponent): void {
+  /**
+   * Checks if the current dice roll is doubles (same number on both dice)
+   */
+  private isDoublesRoll(rolls: number[]): boolean {
+    return rolls.length === 2 && rolls[0] === rolls[1];
+  }
+
+  onDiceRolled(rolls: number[]): void {
     this.currentRolls.set(rolls);
-    this.placementState.set(PlacementState.FIRST);
-    gameBoard.resetPlacementState();
+    
+    if (this.isDoublesRoll(rolls)) {
+      this.placementState.set(PlacementState.DOUBLES_FIRST);
+    } else {
+      this.placementState.set(PlacementState.FIRST);
+    }
+    
+
   }
 
   onPlacementStateChange(state: PlacementState): void {
@@ -42,10 +55,18 @@ export class AppComponent {
     if (state === PlacementState.FIRST) {
       // First placement: second die determines building
       return getBuildingFromDice(rolls[1]);
-    } else {
+    } else if (state === PlacementState.SECOND) {
       // Second placement: first die determines building
       return getBuildingFromDice(rolls[0]);
+    } else if (state === PlacementState.DOUBLES_FIRST) {
+      // Doubles first placement: dice value determines building
+      return getBuildingFromDice(rolls[0]);
+    } else if (state === PlacementState.DOUBLES_SQUARE) {
+      // Doubles second placement: always a square
+      return Buildings.SQUARE;
     }
+    
+    return null;
   } // Dummy method for header component (buttons won't actually change selection)
   buildingSelected(building: Buildings): void {
     // No-op since buildings are determined by dice

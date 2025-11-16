@@ -27,7 +27,30 @@
         border: 1px solid rgba(var(--accent-rgb), 0.3);
         border-radius: 0.25rem;
         color: var(--text-color);
+
+        &.special {
+          background-color: rgba(var(--success-rgb), 0.2);
+          border-color: var(--success-color);
+          box-shadow: 0 0 8px rgba(var(--success-rgb), 0.4);
+          font-weight: 600;
+        }
+      }
+
+      &.doubles .die-result {
+        animation: pulse 2s infinite;
       }
     }
+  }
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 8px rgba(var(--success-rgb), 0.4);
+  }
+  50% {
+    box-shadow: 0 0 16px rgba(var(--success-rgb), 0.8);
+  }
+  100% {
+    box-shadow: 0 0 8px rgba(var(--success-rgb), 0.4);
   }
 }

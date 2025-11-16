@@ -20,6 +20,7 @@ type Board = Cell[][];
 //TODO: Export types
 export class GameBoardComponent {
   currentRolls = input<number[] | null>(null);
+  placementState = input<PlacementState>(PlacementState.FIRST);
   placementStateChanged = output<PlacementState>();
 
   //TODO: Move to config
@@ -31,15 +32,6 @@ export class GameBoardComponent {
   readonly colLabels = ['1', '2', '3', '4', '5', '6'];
 
   board = signal<Board>(this.createEmptyBoard(this.rows, this.cols));
-
-  // Track placement state
-  placementState = signal<PlacementState>(PlacementState.FIRST); /**
-   * Resets the placement state when new dice are rolled
-   */
-  resetPlacementState(): void {
-    this.placementState.set(PlacementState.FIRST);
-    this.placementStateChanged.emit(PlacementState.FIRST);
-  }
 
   /**
    * Gets the current placement instruction text
@@ -63,6 +55,13 @@ export class GameBoardComponent {
           getBuildingFromDice(rolls[0]),
         );
         return `Second placement: Column ${rolls[1]} - Place ${secondBuilding}`;
+      case PlacementState.DOUBLES_FIRST:
+        const doublesBuilding = this.getBuildingDisplayName(
+          getBuildingFromDice(rolls[0]),
+        );
+        return `Doubles! Place ${doublesBuilding} in column ${rolls[0]}`;
+      case PlacementState.DOUBLES_SQUARE:
+        return `Place Square anywhere on empty space`;
       case PlacementState.COMPLETE:
         return 'Both placements completed! Roll dice for next turn.';
       default:
@@ -98,7 +97,7 @@ export class GameBoardComponent {
     }
 
     // Determine allowed column and building based on placement state
-    let allowedColumn: number;
+    let allowedColumn: number | null = null;
     let columnDice: number;
     let buildingDice: number;
     let buildingToPlace: Buildings;
@@ -109,15 +108,28 @@ export class GameBoardComponent {
       buildingDice = rolls[1];
       allowedColumn = columnDice - 1;
       buildingToPlace = getBuildingFromDice(buildingDice);
-    } else {
+    } else if (currentPlacementState === PlacementState.SECOND) {
       // Second placement: second die = column, first die = building
       columnDice = rolls[1];
       buildingDice = rolls[0];
       allowedColumn = columnDice - 1;
       buildingToPlace = getBuildingFromDice(buildingDice);
+    } else if (currentPlacementState === PlacementState.DOUBLES_FIRST) {
+      // Doubles first placement: dice value = column and building
+      columnDice = rolls[0];
+      buildingDice = rolls[0];
+      allowedColumn = columnDice - 1;
+      buildingToPlace = getBuildingFromDice(buildingDice);
+    } else if (currentPlacementState === PlacementState.DOUBLES_SQUARE) {
+      // Doubles second placement: square anywhere (no column restriction)
+      allowedColumn = null; // Any column allowed
+      buildingToPlace = Buildings.SQUARE;
+    } else {
+      return;
     }
 
-    if (col !== allowedColumn) {
+    // Check column restriction (only if not placing square anywhere)
+    if (allowedColumn !== null && col !== allowedColumn) {
       return;
     }
 
@@ -128,11 +140,11 @@ export class GameBoardComponent {
 
       // Update placement state
       if (currentPlacementState === PlacementState.FIRST) {
-        this.placementState.set(PlacementState.SECOND);
         this.placementStateChanged.emit(PlacementState.SECOND);
         console.log('Now place your second building!');
+      } else if (currentPlacementState === PlacementState.DOUBLES_FIRST) {
+        this.placementStateChanged.emit(PlacementState.DOUBLES_SQUARE);
       } else {
-        this.placementState.set(PlacementState.COMPLETE);
         this.placementStateChanged.emit(PlacementState.COMPLETE);
       }
 
@@ -172,9 +184,17 @@ export class GameBoardComponent {
     if (currentPlacementState === PlacementState.FIRST) {
       // First placement: first die determines column
       allowedColumn = rolls[0] - 1;
-    } else {
+    } else if (currentPlacementState === PlacementState.SECOND) {
       // Second placement: second die determines column
       allowedColumn = rolls[1] - 1;
+    } else if (currentPlacementState === PlacementState.DOUBLES_FIRST) {
+      // Doubles first placement: dice value determines column
+      allowedColumn = rolls[0] - 1;
+    } else if (currentPlacementState === PlacementState.DOUBLES_SQUARE) {
+      // Doubles square placement: any empty cell is allowed
+      return true;
+    } else {
+      return false;
     }
 
     return col === allowedColumn;

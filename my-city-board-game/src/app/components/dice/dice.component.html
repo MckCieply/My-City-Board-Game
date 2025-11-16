@@ -11,16 +11,29 @@
   <div class="roll-output">
     @if (currentRolls && currentRolls.length > 0) {
       <h2>You rolled: {{ currentRolls.join(", ") }}</h2>
-      <p class="dice-info">
-        <span class="die-result">
-          Step 1: Column {{ currentRolls[0] }},
-          {{ getBuildingDisplayName(getBuildingFromDice(currentRolls[1])) }}
-        </span>
-        <span class="die-result">
-          Step 2: Column {{ currentRolls[1] }},
-          {{ getBuildingDisplayName(getBuildingFromDice(currentRolls[0])) }}
-        </span>
-      </p>
+      @if (isDoubles()) {
+        <p class="dice-info doubles">
+          <span class="die-result special">
+            🎯 DOUBLES! Place
+            {{ getBuildingDisplayName(getBuildingFromDice(currentRolls[0])) }}
+            in column {{ currentRolls[0] }}
+          </span>
+          <span class="die-result special">
+            Then place Square anywhere!
+          </span>
+        </p>
+      } @else {
+        <p class="dice-info">
+          <span class="die-result">
+            Step 1: Column {{ currentRolls[0] }},
+            {{ getBuildingDisplayName(getBuildingFromDice(currentRolls[1])) }}
+          </span>
+          <span class="die-result">
+            Step 2: Column {{ currentRolls[1] }},
+            {{ getBuildingDisplayName(getBuildingFromDice(currentRolls[0])) }}
+          </span>
+        </p>
+      }
     }
   </div>
 </div>

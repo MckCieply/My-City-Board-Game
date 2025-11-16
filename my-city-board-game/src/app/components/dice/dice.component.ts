@@ -40,6 +40,13 @@ export class DiceComponent {
   }
 
   /**
+   * Checks if the current roll is doubles
+   */
+  isDoubles(): boolean {
+    return this.currentRolls !== null && this.currentRolls.length === 2 && this.currentRolls[0] === this.currentRolls[1];
+  }
+
+  /**
    * Gets the display name for a building enum value
    */
   getBuildingDisplayName(building: Buildings): string {
