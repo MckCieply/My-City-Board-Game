@@ -15,6 +15,7 @@ export class HeaderComponent {
   buttonClicked = output<Buildings>();
   selectedBuilding = input<Buildings | null>(null);
   selectionEnabled = input<boolean>(false);
+  disabledBuildings = input<Set<Buildings>>(new Set());
 
   onButtonClicked(action: Buildings): void {
     this.buttonClicked.emit(action);
@@ -22,5 +23,9 @@ export class HeaderComponent {
 
   isSelected(building: Buildings): boolean {
     return this.selectedBuilding() === building;
+  }
+
+  isBuildingDisabled(building: Buildings): boolean {
+    return !this.selectionEnabled() || this.disabledBuildings().has(building);
   }
 }

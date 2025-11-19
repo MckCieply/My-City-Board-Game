@@ -8,4 +8,5 @@ export enum PlacementState {
   COMPLETE = 'complete',
   DOUBLES_FIRST = 'doubles_first',
   DOUBLES_SQUARE = 'doubles_square',
+  BONUS = 'bonus',
 }

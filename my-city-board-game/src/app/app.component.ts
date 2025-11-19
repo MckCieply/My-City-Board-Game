@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ViewChild } from '@angular/core';
 import { DiceComponent } from './components/dice/dice.component';
 import { GameBoardComponent } from './components/game-board/game-board.component';
 import { HeaderComponent } from './components/header/header.component';
@@ -15,6 +15,8 @@ import { PlacementState } from './models/placement-state.model';
 export class AppComponent {
   title = 'my-city-board-game';
 
+  @ViewChild('gameBoard') gameBoard!: GameBoardComponent;
+  
   currentRolls = signal<number[] | null>(null);
   placementState = signal<PlacementState>(PlacementState.PREP_FIRST);
   selectedBuilding = signal<Buildings | null>(null); // For preparation phase
@@ -31,6 +33,12 @@ export class AppComponent {
     
     const currentState = this.placementState();
     const isPreparation = this.isPreparationPhase(currentState);
+    const isBonusStage = this.isBonusStage(currentState);
+    
+    // Don't change state if we're in bonus stage - let bonus logic handle it
+    if (isBonusStage) {
+      return;
+    }
     
     if (this.isDoublesRoll(rolls)) {
       this.placementState.set(isPreparation ? PlacementState.PREP_DOUBLES_FIRST : PlacementState.DOUBLES_FIRST);
@@ -40,12 +48,27 @@ export class AppComponent {
   }
 
   onPlacementStateChange(state: PlacementState): void {
+    console.log(`Placement state changing to: ${state}`);
     this.placementState.set(state);
+    
+    // If entering bonus stage, clear selected building to force new selection
+    if (state === PlacementState.BONUS) {
+      this.selectedBuilding.set(null);
+      console.log('Entered bonus stage, cleared selected building');
+    }
+    
+    // Don't clear dice during bonus stage
+    if (state === PlacementState.BONUS) {
+      console.log('In bonus stage - keeping dice for reference');
+      return; // Don't process any other state changes
+    }
     
     // If round is complete, clear dice to prepare for next roll
     if (state === PlacementState.COMPLETE) {
+      console.log('Round complete, clearing dice');
       setTimeout(() => {
         this.currentRolls.set(null);
+        console.log('Dice cleared, ready for new roll');
       }, 100);
     }
   }
@@ -61,8 +84,8 @@ export class AppComponent {
       return null;
     }
 
-    // During preparation phase, use selected building
-    if (this.isPreparationPhase(state)) {
+    // During preparation phase or bonus stage, use selected building
+    if (this.isPreparationPhase(state) || this.isBonusStage(state)) {
       return this.selectedBuilding();
     }
 
@@ -85,10 +108,13 @@ export class AppComponent {
   }
 
   /**
-   * Handles building selection during preparation phase
+   * Handles building selection during preparation phase and bonus stages
    */
   buildingSelected(building: Buildings): void {
-    if (this.isPreparationPhase(this.placementState()) && building !== Buildings.SQUARE) {
+    const currentState = this.placementState();
+    if (this.isPreparationPhase(currentState) && building !== Buildings.SQUARE) {
+      this.selectedBuilding.set(building);
+    } else if (this.isBonusStage(currentState) && building !== Buildings.SQUARE) {
       this.selectedBuilding.set(building);
     }
   }
@@ -104,10 +130,17 @@ export class AppComponent {
   }
 
   /**
-   * Checks if building selection is enabled (during preparation phase)
+   * Checks if building selection is enabled (during preparation phase or bonus stage)
    */
   isBuildingSelectionEnabled(): boolean {
-    return this.isPreparationPhase(this.placementState());
+    return this.isPreparationPhase(this.placementState()) || this.isBonusStage(this.placementState());
+  }
+
+  /**
+   * Checks if current state is bonus stage
+   */
+  private isBonusStage(state: PlacementState): boolean {
+    return state === PlacementState.BONUS;
   }
 
   /**
@@ -115,6 +148,33 @@ export class AppComponent {
    */
   getSelectedBuildingForPlacement(): Buildings | undefined {
     const selected = this.selectedBuilding();
-    return this.isPreparationPhase(this.placementState()) ? (selected || undefined) : undefined;
+    const currentState = this.placementState();
+    return (this.isPreparationPhase(currentState) || this.isBonusStage(currentState)) ? (selected || undefined) : undefined;
+  }
+
+  /**
+   * Gets disabled buildings for header component
+   */
+  getDisabledBuildings(): Set<Buildings> {
+    const currentState = this.placementState();
+    const disabled = new Set([Buildings.SQUARE]); // Always disable square
+    
+    if (this.isBonusStage(currentState)) {
+      // During bonus stage, disable used buildings
+      const usedBuildings = this.getUsedBonusBuildings();
+      usedBuildings.forEach(building => disabled.add(building));
+    }
+    
+    return disabled;
+  }
+
+  /**
+   * Gets used bonus buildings from the game board component
+   */
+  getUsedBonusBuildings(): Set<Buildings> {
+    if (this.gameBoard) {
+      return this.gameBoard.usedBonusBuildings();
+    }
+    return new Set();
   }
 }

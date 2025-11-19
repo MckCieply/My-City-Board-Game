@@ -44,24 +44,12 @@
     }
   </div>
   
-  <!-- Footer scoring grid -->
-  <div class="footer-wrapper">
-    @for (score of footerScores(); track $index) {
-      <div class="footer-cell" 
-           [class.has-score]="score > 0"
-           [class.current-round]="$index === currentRound() - 1 && score === 0">
-        <div class="footer-label">R{{ $index + 1 }}</div>
-        @if (score > 0) {
-          <div class="footer-score">{{ score }}</div>
-        } @else if ($index === currentRound() - 1) {
-          <div class="footer-current">•</div>
-        }
-      </div>
-    }
-    <!-- Total score display -->
-    <div class="total-score-wrapper">
-      <div class="total-label">Total</div>
-      <div class="total-score">{{ getTotalScore() }}</div>
-    </div>
-  </div>
+  <!-- Game Footer Component -->
+  <app-game-footer 
+    [footerScores]="footerScores()"
+    [currentRound]="currentRound()"
+    [bonusStageRounds]="bonusStageRounds"
+    [bonusStageBuildings]="bonusStageBuildings()"
+    [totalScore]="getTotalScore()">
+  </app-game-footer>
 </div>

@@ -6,6 +6,7 @@ import {
   getBuildingFromDice,
 } from '../../models/buildings.model';
 import { PlacementState } from '../../models/placement-state.model';
+import { GameFooterComponent } from '../game-footer/game-footer.component';
 
 type Cell = Buildings | null;
 type Board = Cell[][];
@@ -13,7 +14,7 @@ type Board = Cell[][];
 @Component({
   selector: 'app-game-board',
   standalone: true,
-  imports: [LucideAngularModule],
+  imports: [LucideAngularModule, GameFooterComponent],
   templateUrl: './game-board.component.html',
   styleUrl: './game-board.component.scss',
 })
@@ -41,6 +42,12 @@ export class GameBoardComponent {
   gameComplete = signal<boolean>(false);
   inPreparationPhase = signal<boolean>(true);
   
+  // Bonus stage tracking
+  inBonusStage = signal<boolean>(false);
+  usedBonusBuildings = signal<Set<Buildings>>(new Set());
+  bonusStageBuildings = signal<Map<number, Buildings>>(new Map()); // Track building by round
+  bonusStageRounds = [3, 6, 9];
+  
   // Scoring visualization
   currentScoringStreet = signal<number>(-1);
   currentScoringGroups = signal<Set<string>>(new Set());
@@ -61,12 +68,7 @@ export class GameBoardComponent {
     return this.pointMatrix[row]?.[col] || 0;
   }
 
-  /**
-   * Helper method to create array for footer columns
-   */
-  getFooterColumns(): number[] {
-    return Array.from({ length: 9 }, (_, i) => i);
-  }
+
 
   /**
    * Calculate score for a specific street (row) based on dice sum
@@ -172,23 +174,15 @@ export class GameBoardComponent {
     const rolls = this.currentRolls();
     if (!rolls || rolls.length !== 2) return;
     
+    // Don't complete round if we're already in bonus stage
+    if (this.inBonusStage()) {
+      return;
+    }
+    
     // Handle preparation phase differently (no scoring)
     if (this.inPreparationPhase()) {
-      console.log('Preparation phase complete! Starting round 1.');
       this.inPreparationPhase.set(false);
       this.currentRound.set(1);
-      
-      // Transition to regular game state - emit the appropriate first state
-      setTimeout(() => {
-        const currentRolls = this.currentRolls();
-        if (currentRolls && currentRolls.length === 2) {
-          if (currentRolls[0] === currentRolls[1]) {
-            this.placementStateChanged.emit(PlacementState.DOUBLES_FIRST);
-          } else {
-            this.placementStateChanged.emit(PlacementState.FIRST);
-          }
-        }
-      }, 100);
       return;
     }
     
@@ -209,19 +203,24 @@ export class GameBoardComponent {
         this.footerScores.set([...currentScores]);
       }
       
-      console.log(`Round ${this.currentRound()} complete: Dice sum ${diceSum}, Score: ${score}`);
-      
       // Clear visualization after scoring
       setTimeout(() => {
         this.clearScoringVisualization();
         
+        // Check if current round triggers a bonus stage (after completing it)
+        const currentRoundNum = this.currentRound();
+        if (this.bonusStageRounds.includes(currentRoundNum)) {
+          this.inBonusStage.set(true);
+          this.placementStateChanged.emit(PlacementState.BONUS);
+          return; // Stay on current round, wait for bonus placement
+        }
+        
         // Advance to next round
-        const nextRound = this.currentRound() + 1;
+        const nextRound = currentRoundNum + 1;
         if (nextRound <= this.maxRounds) {
           this.currentRound.set(nextRound);
         } else {
           this.gameComplete.set(true);
-          console.log('Game Complete! Final scores:', this.footerScores());
         }
       }, 2000);
     }, 500);
@@ -240,6 +239,9 @@ export class GameBoardComponent {
   resetGame(): void {
     this.currentRound.set(0);
     this.inPreparationPhase.set(true);
+    this.inBonusStage.set(false);
+    this.usedBonusBuildings.set(new Set());
+    this.bonusStageBuildings.set(new Map());
     this.footerScores.set(Array(9).fill(0));
     this.gameComplete.set(false);
     this.board.set(this.createEmptyBoard(this.rows, this.cols));
@@ -324,6 +326,21 @@ export class GameBoardComponent {
       if (this.inPreparationPhase()) {
         return `Preparation Phase - Roll dice to start!`;
       }
+      // Show bonus stage text even without dice
+      if (state === PlacementState.BONUS) {
+        const availableBuildings = this.getAvailableBonusBuildings();
+        const selectedBonusBuilding = this.selectedBuilding();
+        
+        if (availableBuildings.length === 0) {
+          return `Bonus Stage (Round ${this.currentRound()}) - No buildings available!`;
+        } else if (availableBuildings.length === 1) {
+          return `Bonus Stage (Round ${this.currentRound()}) - Place ${this.getBuildingDisplayName(availableBuildings[0])} anywhere!`;
+        } else if (!selectedBonusBuilding) {
+          return `Bonus Stage (Round ${this.currentRound()}) - Select a building to place anywhere!`;
+        } else {
+          return `Bonus Stage (Round ${this.currentRound()}) - Place ${this.getBuildingDisplayName(selectedBonusBuilding)} anywhere!`;
+        }
+      }
       return `Round ${round}/${this.maxRounds} - Roll dice to start!`;
     }
 
@@ -369,9 +386,25 @@ export class GameBoardComponent {
         return `Round ${round} - Doubles! Place ${doublesBuilding} in column ${rolls[0]}`;
       case PlacementState.DOUBLES_SQUARE:
         return `Round ${round} - Place Square anywhere on empty space`;
+      case PlacementState.BONUS:
+        const availableBuildings = this.getAvailableBonusBuildings();
+        const selectedBonusBuilding = this.selectedBuilding();
+        
+        if (availableBuildings.length === 0) {
+          return `Bonus Stage (Round ${this.currentRound()}) - No buildings available!`;
+        } else if (availableBuildings.length === 1) {
+          return `Bonus Stage (Round ${this.currentRound()}) - Place ${this.getBuildingDisplayName(availableBuildings[0])} anywhere!`;
+        } else if (!selectedBonusBuilding) {
+          return `Bonus Stage (Round ${this.currentRound()}) - Select a building to place anywhere!`;
+        } else {
+          return `Bonus Stage (Round ${this.currentRound()}) - Place ${this.getBuildingDisplayName(selectedBonusBuilding)} anywhere!`;
+        }
       case PlacementState.COMPLETE:
         if (this.inPreparationPhase()) {
           return 'Preparation complete! Roll dice for next turn.';
+        }
+        if (this.inBonusStage()) {
+          return 'Bonus building placed! Roll dice for next turn.';
         }
         return 'Both placements completed! Roll dice for next turn.';
       default:
@@ -391,7 +424,32 @@ export class GameBoardComponent {
     const currentPlacementState = this.placementState();
     const board = this.board();
 
-    // Check if dice have been rolled
+    // Handle bonus stage placement (doesn't need dice)
+    if (currentPlacementState === PlacementState.BONUS) {
+      const selectedBuildingValue = this.selectedBuilding();
+      if (!selectedBuildingValue) return; // Must select building first
+      
+      // Check if cell is empty
+      if (board[row][col] !== null) return;
+      
+      // Check if building is available for bonus stage
+      const availableBuildings = this.getAvailableBonusBuildings();
+      if (!availableBuildings.includes(selectedBuildingValue)) return;
+      
+      // Place the building anywhere on the board
+      this.board.update((currentBoard) => {
+        const newBoard = currentBoard.map((r) => [...r]);
+        newBoard[row][col] = selectedBuildingValue;
+        
+        // Complete bonus stage
+        this.completeBonusStage(selectedBuildingValue);
+        
+        return newBoard;
+      });
+      return;
+    }
+
+    // Check if dice have been rolled (for regular game phases)
     if (!rolls || rolls.length < 2) {
       return;
     }
@@ -478,19 +536,15 @@ export class GameBoardComponent {
       // Update placement state
       if (currentPlacementState === PlacementState.PREP_FIRST) {
         this.placementStateChanged.emit(PlacementState.PREP_SECOND);
-        console.log('Now place your second building!');
       } else if (currentPlacementState === PlacementState.PREP_DOUBLES_FIRST) {
         this.placementStateChanged.emit(PlacementState.PREP_DOUBLES_SECOND);
       } else if (currentPlacementState === PlacementState.FIRST) {
         this.placementStateChanged.emit(PlacementState.SECOND);
-        console.log('Now place your second building!');
       } else if (currentPlacementState === PlacementState.DOUBLES_FIRST) {
         this.placementStateChanged.emit(PlacementState.DOUBLES_SQUARE);
       } else {
-        // Round is complete - trigger scoring (only in regular game phase)
-        if (!this.inPreparationPhase()) {
-          this.completeRound();
-        }
+        // Round is complete - trigger completion logic for both prep and regular phases
+        this.completeRound();
         this.placementStateChanged.emit(PlacementState.COMPLETE);
       }
 
@@ -509,7 +563,20 @@ export class GameBoardComponent {
     const currentPlacementState = this.placementState();
     const board = this.board();
 
-    // Must have dice rolled
+    // Handle bonus stage clickability (doesn't need dice)
+    if (currentPlacementState === PlacementState.BONUS) {
+      // Must have building selected and it must be available
+      const selectedBuildingValue = this.selectedBuilding();
+      if (!selectedBuildingValue) return false;
+      
+      const availableBuildings = this.getAvailableBonusBuildings();
+      if (!availableBuildings.includes(selectedBuildingValue)) return false;
+      
+      // Can click any empty cell
+      return board[row][col] === null;
+    }
+
+    // Must have dice rolled for regular game phases
     if (!rolls || rolls.length < 2) {
       return false;
     }
@@ -577,6 +644,48 @@ export class GameBoardComponent {
     const board = this.board();
     return board[row][col] !== null;
   }
+
+  /**
+   * Gets available buildings for bonus stage (excluding already used ones)
+   */
+  getAvailableBonusBuildings(): Buildings[] {
+    const allBuildings = [Buildings.HOUSE, Buildings.LAKE, Buildings.FOREST];
+    const used = this.usedBonusBuildings();
+    return allBuildings.filter(building => !used.has(building));
+  }
+
+  /**
+   * Completes a bonus stage placement
+   */
+  completeBonusStage(placedBuilding: Buildings): void {
+    // Mark building as used
+    const used = new Set(this.usedBonusBuildings());
+    used.add(placedBuilding);
+    this.usedBonusBuildings.set(used);
+    
+    // Track building by current round
+    const roundBuildings = new Map(this.bonusStageBuildings());
+    roundBuildings.set(this.currentRound(), placedBuilding);
+    this.bonusStageBuildings.set(roundBuildings);
+    
+    // Exit bonus stage and advance to next round
+    this.inBonusStage.set(false);
+    
+    // Advance to next round after bonus completion
+    const nextRound = this.currentRound() + 1;
+    if (nextRound <= this.maxRounds) {
+      this.currentRound.set(nextRound);
+    } else {
+      this.gameComplete.set(true);
+    }
+    
+    // Clear any existing dice rolls and reset to complete state
+    setTimeout(() => {
+      this.placementStateChanged.emit(PlacementState.COMPLETE);
+    }, 100);
+  }
+
+
 
   /**
    * Creates and returns a 2D array representing an empty game board.
