@@ -14,6 +14,7 @@ export class HeaderComponent {
   Buildings = Buildings;
   buttonClicked = output<Buildings>();
   selectedBuilding = input<Buildings | null>(null);
+  selectionEnabled = input<boolean>(false);
 
   onButtonClicked(action: Buildings): void {
     this.buttonClicked.emit(action);

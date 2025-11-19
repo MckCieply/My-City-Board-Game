@@ -20,7 +20,8 @@ type Board = Cell[][];
 //TODO: Export types
 export class GameBoardComponent {
   currentRolls = input<number[] | null>(null);
-  placementState = input<PlacementState>(PlacementState.FIRST);
+  placementState = input<PlacementState>(PlacementState.PREP_FIRST);
+  selectedBuilding = input<Buildings | null | undefined>(undefined);
   placementStateChanged = output<PlacementState>();
 
   //TODO: Move to config
@@ -34,10 +35,11 @@ export class GameBoardComponent {
   board = signal<Board>(this.createEmptyBoard(this.rows, this.cols));
   
   // Game state tracking
-  currentRound = signal<number>(1);
+  currentRound = signal<number>(0); // 0 = preparation phase, 1-9 = actual rounds
   maxRounds = 9;
   footerScores = signal<number[]>(Array(9).fill(0));
   gameComplete = signal<boolean>(false);
+  inPreparationPhase = signal<boolean>(true);
   
   // Scoring visualization
   currentScoringStreet = signal<number>(-1);
@@ -170,6 +172,26 @@ export class GameBoardComponent {
     const rolls = this.currentRolls();
     if (!rolls || rolls.length !== 2) return;
     
+    // Handle preparation phase differently (no scoring)
+    if (this.inPreparationPhase()) {
+      console.log('Preparation phase complete! Starting round 1.');
+      this.inPreparationPhase.set(false);
+      this.currentRound.set(1);
+      
+      // Transition to regular game state - emit the appropriate first state
+      setTimeout(() => {
+        const currentRolls = this.currentRolls();
+        if (currentRolls && currentRolls.length === 2) {
+          if (currentRolls[0] === currentRolls[1]) {
+            this.placementStateChanged.emit(PlacementState.DOUBLES_FIRST);
+          } else {
+            this.placementStateChanged.emit(PlacementState.FIRST);
+          }
+        }
+      }, 100);
+      return;
+    }
+    
     const diceSum = rolls[0] + rolls[1];
     
     // Show scoring visualization
@@ -216,7 +238,8 @@ export class GameBoardComponent {
    * Reset game to initial state
    */
   resetGame(): void {
-    this.currentRound.set(1);
+    this.currentRound.set(0);
+    this.inPreparationPhase.set(true);
     this.footerScores.set(Array(9).fill(0));
     this.gameComplete.set(false);
     this.board.set(this.createEmptyBoard(this.rows, this.cols));
@@ -298,28 +321,58 @@ export class GameBoardComponent {
     }
 
     if (!rolls || rolls.length < 2) {
+      if (this.inPreparationPhase()) {
+        return `Preparation Phase - Roll dice to start!`;
+      }
       return `Round ${round}/${this.maxRounds} - Roll dice to start!`;
     }
 
     switch (state) {
+      case PlacementState.PREP_FIRST:
+        const selectedBuilding = this.selectedBuilding();
+        if (!selectedBuilding) {
+          return `Preparation - First placement: Column ${rolls[0]} - Select a building first!`;
+        }
+        return `Preparation - First placement: Column ${rolls[0]} - Place ${this.getBuildingDisplayName(selectedBuilding)}`;
+      case PlacementState.PREP_SECOND:
+        const selectedBuilding2 = this.selectedBuilding();
+        if (!selectedBuilding2) {
+          return `Preparation - Second placement: Column ${rolls[1]} - Select a building first!`;
+        }
+        return `Preparation - Second placement: Column ${rolls[1]} - Place ${this.getBuildingDisplayName(selectedBuilding2)}`;
+      case PlacementState.PREP_DOUBLES_FIRST:
+        const selectedBuilding3 = this.selectedBuilding();
+        if (!selectedBuilding3) {
+          return `Preparation - Doubles! First placement: Column ${rolls[0]} - Select a building first!`;
+        }
+        return `Preparation - Doubles! First placement: Place ${this.getBuildingDisplayName(selectedBuilding3)} in column ${rolls[0]}`;
+      case PlacementState.PREP_DOUBLES_SECOND:
+        const selectedBuilding4 = this.selectedBuilding();
+        if (!selectedBuilding4) {
+          return `Preparation - Doubles! Second placement: Column ${rolls[0]} - Select a building first!`;
+        }
+        return `Preparation - Doubles! Second placement: Place ${this.getBuildingDisplayName(selectedBuilding4)} in column ${rolls[0]}`;
       case PlacementState.FIRST:
         const firstBuilding = this.getBuildingDisplayName(
           getBuildingFromDice(rolls[1]),
         );
-        return `First placement: Column ${rolls[0]} - Place ${firstBuilding}`;
+        return `Round ${round} - First placement: Column ${rolls[0]} - Place ${firstBuilding}`;
       case PlacementState.SECOND:
         const secondBuilding = this.getBuildingDisplayName(
           getBuildingFromDice(rolls[0]),
         );
-        return `Second placement: Column ${rolls[1]} - Place ${secondBuilding}`;
+        return `Round ${round} - Second placement: Column ${rolls[1]} - Place ${secondBuilding}`;
       case PlacementState.DOUBLES_FIRST:
         const doublesBuilding = this.getBuildingDisplayName(
           getBuildingFromDice(rolls[0]),
         );
-        return `Doubles! Place ${doublesBuilding} in column ${rolls[0]}`;
+        return `Round ${round} - Doubles! Place ${doublesBuilding} in column ${rolls[0]}`;
       case PlacementState.DOUBLES_SQUARE:
-        return `Place Square anywhere on empty space`;
+        return `Round ${round} - Place Square anywhere on empty space`;
       case PlacementState.COMPLETE:
+        if (this.inPreparationPhase()) {
+          return 'Preparation complete! Roll dice for next turn.';
+        }
         return 'Both placements completed! Roll dice for next turn.';
       default:
         return '';
@@ -359,7 +412,34 @@ export class GameBoardComponent {
     let buildingDice: number;
     let buildingToPlace: Buildings;
 
-    if (currentPlacementState === PlacementState.FIRST) {
+    // Handle preparation phase states
+    if (currentPlacementState === PlacementState.PREP_FIRST) {
+      const selectedBuildingValue = this.selectedBuilding();
+      if (!selectedBuildingValue) return; // Don't allow placement without selection
+      columnDice = rolls[0];
+      allowedColumn = columnDice - 1;
+      buildingToPlace = selectedBuildingValue;
+    } else if (currentPlacementState === PlacementState.PREP_SECOND) {
+      const selectedBuildingValue = this.selectedBuilding();
+      if (!selectedBuildingValue) return; // Don't allow placement without selection
+      columnDice = rolls[1];
+      allowedColumn = columnDice - 1;
+      buildingToPlace = selectedBuildingValue;
+    } else if (currentPlacementState === PlacementState.PREP_DOUBLES_FIRST) {
+      const selectedBuildingValue = this.selectedBuilding();
+      if (!selectedBuildingValue) return; // Don't allow placement without selection
+      columnDice = rolls[0];
+      allowedColumn = columnDice - 1;
+      buildingToPlace = selectedBuildingValue;
+    } else if (currentPlacementState === PlacementState.PREP_DOUBLES_SECOND) {
+      const selectedBuildingValue = this.selectedBuilding();
+      if (!selectedBuildingValue) return; // Don't allow placement without selection
+      columnDice = rolls[0]; // Same column as first placement
+      allowedColumn = columnDice - 1;
+      buildingToPlace = selectedBuildingValue;
+    }
+    // Handle regular game states
+    else if (currentPlacementState === PlacementState.FIRST) {
       // First placement: first die = column, second die = building
       columnDice = rolls[0];
       buildingDice = rolls[1];
@@ -390,20 +470,27 @@ export class GameBoardComponent {
       return;
     }
 
-    // Cell is empty and in correct column: Place the dice-determined building
+    // Cell is empty and in correct column: Place the building
     this.board.update((currentBoard) => {
       const newBoard = currentBoard.map((r) => [...r]);
       newBoard[row][col] = buildingToPlace;
 
       // Update placement state
-      if (currentPlacementState === PlacementState.FIRST) {
+      if (currentPlacementState === PlacementState.PREP_FIRST) {
+        this.placementStateChanged.emit(PlacementState.PREP_SECOND);
+        console.log('Now place your second building!');
+      } else if (currentPlacementState === PlacementState.PREP_DOUBLES_FIRST) {
+        this.placementStateChanged.emit(PlacementState.PREP_DOUBLES_SECOND);
+      } else if (currentPlacementState === PlacementState.FIRST) {
         this.placementStateChanged.emit(PlacementState.SECOND);
         console.log('Now place your second building!');
       } else if (currentPlacementState === PlacementState.DOUBLES_FIRST) {
         this.placementStateChanged.emit(PlacementState.DOUBLES_SQUARE);
       } else {
-        // Round is complete - trigger scoring
-        this.completeRound();
+        // Round is complete - trigger scoring (only in regular game phase)
+        if (!this.inPreparationPhase()) {
+          this.completeRound();
+        }
         this.placementStateChanged.emit(PlacementState.COMPLETE);
       }
 
@@ -437,10 +524,31 @@ export class GameBoardComponent {
       return false;
     }
 
+    // During preparation phase, must have building selected
+    if ((currentPlacementState === PlacementState.PREP_FIRST || 
+         currentPlacementState === PlacementState.PREP_SECOND || 
+         currentPlacementState === PlacementState.PREP_DOUBLES_FIRST ||
+         currentPlacementState === PlacementState.PREP_DOUBLES_SECOND) &&
+        !this.selectedBuilding()) {
+      return false;
+    }
+
     // Determine allowed column based on placement state
     let allowedColumn: number;
 
-    if (currentPlacementState === PlacementState.FIRST) {
+    if (currentPlacementState === PlacementState.PREP_FIRST) {
+      // Preparation first placement: first die determines column
+      allowedColumn = rolls[0] - 1;
+    } else if (currentPlacementState === PlacementState.PREP_SECOND) {
+      // Preparation second placement: second die determines column
+      allowedColumn = rolls[1] - 1;
+    } else if (currentPlacementState === PlacementState.PREP_DOUBLES_FIRST) {
+      // Preparation doubles first placement: dice value determines column
+      allowedColumn = rolls[0] - 1;
+    } else if (currentPlacementState === PlacementState.PREP_DOUBLES_SECOND) {
+      // Preparation doubles second placement: same column as first
+      allowedColumn = rolls[0] - 1;
+    } else if (currentPlacementState === PlacementState.FIRST) {
       // First placement: first die determines column
       allowedColumn = rolls[0] - 1;
     } else if (currentPlacementState === PlacementState.SECOND) {

@@ -2,7 +2,8 @@
   <button
     mat-fab
     [class.selected]="isSelected(Buildings.HOUSE)"
-    [disabled]="true"
+    [disabled]="!selectionEnabled()"
+    (click)="onButtonClicked(Buildings.HOUSE)"
   >
     <lucide-icon name="house" />
   </button>
@@ -10,7 +11,8 @@
   <button
     mat-fab
     [class.selected]="isSelected(Buildings.LAKE)"
-    [disabled]="true"
+    [disabled]="!selectionEnabled()"
+    (click)="onButtonClicked(Buildings.LAKE)"
   >
     <lucide-icon name="waves" />
   </button>
@@ -18,7 +20,8 @@
   <button
     mat-fab
     [class.selected]="isSelected(Buildings.FOREST)"
-    [disabled]="true"
+    [disabled]="!selectionEnabled()"
+    (click)="onButtonClicked(Buildings.FOREST)"
   >
     <lucide-icon name="tree-deciduous" />
   </button>
@@ -27,6 +30,7 @@
     mat-fab
     [class.selected]="isSelected(Buildings.SQUARE)"
     [disabled]="true"
+    (click)="onButtonClicked(Buildings.SQUARE)"
   >
     <lucide-icon name="flag-triangle-right" />
   </button>

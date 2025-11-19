@@ -4,6 +4,7 @@
     <app-header
       (buttonClicked)="buildingSelected($event)"
       [selectedBuilding]="getCurrentSelectedBuilding()"
+      [selectionEnabled]="isBuildingSelectionEnabled()"
     />
   </div>
   <div class="app_board">
@@ -11,6 +12,7 @@
       #gameBoard
       [currentRolls]="currentRolls()"
       [placementState]="placementState()"
+      [selectedBuilding]="getSelectedBuildingForPlacement()"
       (placementStateChanged)="onPlacementStateChange($event)"
     />
   </div>
