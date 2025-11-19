@@ -3,6 +3,7 @@
     mat-raised-button
     color="success"
     (click)="rollDice()"
+    [disabled]="disabled()"
     class="roll-button"
   >
     Roll Dice
@@ -23,16 +24,41 @@
           </span>
         </p>
       } @else {
-        <p class="dice-info">
-          <span class="die-result">
-            Step 1: Column {{ currentRolls[0] }},
-            {{ getBuildingDisplayName(getBuildingFromDice(currentRolls[1])) }}
-          </span>
-          <span class="die-result">
-            Step 2: Column {{ currentRolls[1] }},
-            {{ getBuildingDisplayName(getBuildingFromDice(currentRolls[0])) }}
-          </span>
-        </p>
+        @if (stepSwitchingDisabled()) {
+          <p class="dice-info">
+            <span class="die-result">
+              Step 1: Column {{ currentRolls[0] }},
+              {{ getBuildingDisplayName(getBuildingFromDice(currentRolls[1])) }}
+            </span>
+            <span class="die-result">
+              Step 2: Column {{ currentRolls[1] }},
+              {{ getBuildingDisplayName(getBuildingFromDice(currentRolls[0])) }}
+            </span>
+          </p>
+        } @else {
+          <div class="dice-info step-buttons">
+            <button 
+              mat-raised-button 
+              [color]="selectedStep === 'first' ? 'accent' : 'primary'"
+              (click)="selectStep('first')"
+              class="step-button"
+              [class.selected]="selectedStep === 'first'"
+            >
+              Step 1: Column {{ currentRolls[0] }},
+              {{ getBuildingDisplayName(getBuildingFromDice(currentRolls[1])) }}
+            </button>
+            <button 
+              mat-raised-button 
+              [color]="selectedStep === 'second' ? 'accent' : 'primary'"
+              (click)="selectStep('second')"
+              class="step-button"
+              [class.selected]="selectedStep === 'second'"
+            >
+              Step 2: Column {{ currentRolls[1] }},
+              {{ getBuildingDisplayName(getBuildingFromDice(currentRolls[0])) }}
+            </button>
+          </div>
+        }
       }
     }
   </div>

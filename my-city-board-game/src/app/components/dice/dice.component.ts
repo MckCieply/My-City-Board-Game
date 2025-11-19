@@ -1,9 +1,9 @@
-import { Component, output } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import {
-  Buildings,
-  getBuildingDisplayName,
-  getBuildingFromDice,
+    Buildings,
+    getBuildingDisplayName,
+    getBuildingFromDice,
 } from '../../models/buildings.model';
 
 @Component({
@@ -14,23 +14,17 @@ import {
   styleUrl: './dice.component.scss',
 })
 export class DiceComponent {
+  disabled = input<boolean>(false);
+  stepSwitchingDisabled = input<boolean>(false);
   diceRolled = output<number[]>();
+  stepSelected = output<'first' | 'second'>();
 
   public diceValues: number[] = [1, 2, 3, 4, 5, 6];
 
   public currentRolls: number[] | null = null;
+  public selectedStep: 'first' | 'second' = 'first';
 
   constructor() {}
-
-  //Roll twice to get a number between 1 and 6
-  rollDice(): void {
-    const roll1 =
-      this.diceValues[Math.floor(Math.random() * this.diceValues.length)];
-    const roll2 =
-      this.diceValues[Math.floor(Math.random() * this.diceValues.length)];
-    this.currentRolls = [roll1, roll2];
-    this.diceRolled.emit(this.currentRolls);
-  }
 
   /**
    * Gets the building enum from dice value
@@ -51,5 +45,26 @@ export class DiceComponent {
    */
   getBuildingDisplayName(building: Buildings): string {
     return getBuildingDisplayName(building);
+  }
+
+  /**
+   * Selects which step to perform (first or second)
+   */
+  selectStep(step: 'first' | 'second'): void {
+    this.selectedStep = step;
+    this.stepSelected.emit(step);
+  }
+
+  /**
+   * Reset selected step when new dice are rolled
+   */
+  rollDice(): void {
+    const roll1 =
+      this.diceValues[Math.floor(Math.random() * this.diceValues.length)];
+    const roll2 =
+      this.diceValues[Math.floor(Math.random() * this.diceValues.length)];
+    this.currentRolls = [roll1, roll2];
+    this.selectedStep = 'first'; // Reset to first step
+    this.diceRolled.emit(this.currentRolls);
   }
 }

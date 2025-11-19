@@ -1,6 +1,11 @@
 <div class="app_container">
   <div class="app_header">
-    <app-dice (diceRolled)="onDiceRolled($event)" />
+    <app-dice 
+      (diceRolled)="onDiceRolled($event)" 
+      (stepSelected)="onStepSelected($event)"
+      [disabled]="isDiceRollingDisabled()"
+      [stepSwitchingDisabled]="isStepSwitchingDisabled()" 
+    />
     <app-header
       (buttonClicked)="buildingSelected($event)"
       [selectedBuilding]="getCurrentSelectedBuilding()"

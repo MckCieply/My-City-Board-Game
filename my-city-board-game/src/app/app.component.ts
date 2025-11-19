@@ -66,6 +66,12 @@ export class AppComponent {
     // If round is complete, clear dice to prepare for next roll
     if (state === PlacementState.COMPLETE) {
       console.log('Round complete, clearing dice');
+      
+      // Clear current turn placements to prevent replacement of buildings from previous turns
+      if (this.gameBoard) {
+        this.gameBoard.clearCurrentTurnPlacements();
+      }
+      
       setTimeout(() => {
         this.currentRolls.set(null);
         console.log('Dice cleared, ready for new roll');
@@ -176,5 +182,67 @@ export class AppComponent {
       return this.gameBoard.usedBonusBuildings();
     }
     return new Set();
+  }
+
+  /**
+   * Determines if dice rolling should be disabled
+   * Dice should be disabled when:
+   * - A round is in progress (dice rolled but placements not complete)
+   * - Game is complete
+   */
+  isDiceRollingDisabled(): boolean {
+    const currentState = this.placementState();
+    const hasRolls = this.currentRolls() !== null;
+    
+    // If game is complete, disable dice
+    if (this.gameBoard && this.gameBoard.gameComplete()) {
+      return true;
+    }
+    
+    // If we have dice rolls and not in COMPLETE state, disable rolling again
+    if (hasRolls && currentState !== PlacementState.COMPLETE) {
+      return true;
+    }
+    
+    return false;
+  }
+
+  /**
+   * Determines if step switching should be disabled
+   * Step switching is disabled during:
+   * - Preparation phases
+   * - Bonus stages  
+   * - Doubles rolls
+   */
+  isStepSwitchingDisabled(): boolean {
+    const rolls = this.currentRolls();
+    const currentState = this.placementState();
+    
+    // Disable if no rolls or during prep/bonus/doubles
+    return !rolls || 
+           this.isPreparationPhase(currentState) || 
+           this.isBonusStage(currentState) || 
+           this.isDoublesRoll(rolls);
+  }
+
+  /**
+   * Handles step selection from dice component
+   */
+  onStepSelected(step: 'first' | 'second'): void {
+    const rolls = this.currentRolls();
+    const currentState = this.placementState();
+    
+    // Only allow step switching during regular game (not prep, bonus, or doubles)
+    if (!rolls || this.isPreparationPhase(currentState) || 
+        this.isBonusStage(currentState) || this.isDoublesRoll(rolls)) {
+      return;
+    }
+    
+    // Switch placement state based on selected step
+    if (step === 'first') {
+      this.placementState.set(PlacementState.FIRST);
+    } else {
+      this.placementState.set(PlacementState.SECOND);
+    }
   }
 }

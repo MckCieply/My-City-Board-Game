@@ -48,6 +48,9 @@ export class GameBoardComponent {
   bonusStageBuildings = signal<Map<number, Buildings>>(new Map()); // Track building by round
   bonusStageRounds = [3, 6, 9];
   
+  // Current turn tracking - positions placed during the current turn
+  currentTurnPlacements = signal<Set<string>>(new Set());
+  
   // Scoring visualization
   currentScoringStreet = signal<number>(-1);
   currentScoringGroups = signal<Set<string>>(new Set());
@@ -234,6 +237,13 @@ export class GameBoardComponent {
   }
 
   /**
+   * Clears current turn placements (called when round completes)
+   */
+  clearCurrentTurnPlacements(): void {
+    this.currentTurnPlacements.set(new Set());
+  }
+
+  /**
    * Reset game to initial state
    */
   resetGame(): void {
@@ -244,6 +254,7 @@ export class GameBoardComponent {
     this.bonusStageBuildings.set(new Map());
     this.footerScores.set(Array(9).fill(0));
     this.gameComplete.set(false);
+    this.currentTurnPlacements.set(new Set());
     this.board.set(this.createEmptyBoard(this.rows, this.cols));
     this.clearScoringVisualization();
   }
@@ -429,8 +440,16 @@ export class GameBoardComponent {
       const selectedBuildingValue = this.selectedBuilding();
       if (!selectedBuildingValue) return; // Must select building first
       
-      // Check if cell is empty
-      if (board[row][col] !== null) return;
+      // Check if cell is already occupied by a previous turn building
+      const cellKey = `${row}-${col}`;
+      const currentTurnPlacements = this.currentTurnPlacements();
+      
+      if (board[row][col] !== null) {
+        // Allow replacement only if this cell was placed during the current turn
+        if (!currentTurnPlacements.has(cellKey)) {
+          return; // Can't replace buildings from previous turns
+        }
+      }
       
       // Check if building is available for bonus stage
       const availableBuildings = this.getAvailableBonusBuildings();
@@ -440,6 +459,9 @@ export class GameBoardComponent {
       this.board.update((currentBoard) => {
         const newBoard = currentBoard.map((r) => [...r]);
         newBoard[row][col] = selectedBuildingValue;
+        
+        // Track this placement for current turn
+        this.currentTurnPlacements.update(placements => new Set([...placements, cellKey]));
         
         // Complete bonus stage
         this.completeBonusStage(selectedBuildingValue);
@@ -460,8 +482,14 @@ export class GameBoardComponent {
     }
 
     // Check if cell is already occupied
+    const cellKey = `${row}-${col}`;
+    const currentTurnPlacements = this.currentTurnPlacements();
+    
     if (board[row][col] !== null) {
-      return;
+      // Allow replacement only if this cell was placed during the current turn
+      if (!currentTurnPlacements.has(cellKey)) {
+        return; // Can't replace buildings from previous turns
+      }
     }
 
     // Determine allowed column and building based on placement state
@@ -528,10 +556,14 @@ export class GameBoardComponent {
       return;
     }
 
-    // Cell is empty and in correct column: Place the building
+    // Cell is in correct column: Place the building (replacing if from current turn)
     this.board.update((currentBoard) => {
       const newBoard = currentBoard.map((r) => [...r]);
       newBoard[row][col] = buildingToPlace;
+
+      // Track this placement for current turn
+      const cellKey = `${row}-${col}`;
+      this.currentTurnPlacements.update(placements => new Set([...placements, cellKey]));
 
       // Update placement state
       if (currentPlacementState === PlacementState.PREP_FIRST) {
@@ -572,8 +604,10 @@ export class GameBoardComponent {
       const availableBuildings = this.getAvailableBonusBuildings();
       if (!availableBuildings.includes(selectedBuildingValue)) return false;
       
-      // Can click any empty cell
-      return board[row][col] === null;
+      // Can click empty cells or cells with current-turn buildings
+      const cellKey = `${row}-${col}`;
+      const currentTurnPlacements = this.currentTurnPlacements();
+      return board[row][col] === null || currentTurnPlacements.has(cellKey);
     }
 
     // Must have dice rolled for regular game phases
@@ -586,9 +620,15 @@ export class GameBoardComponent {
       return false;
     }
 
-    // Cell must be empty
+    // Cell must be empty or contain a current-turn building (replaceable)
+    const cellKey = `${row}-${col}`;
+    const currentTurnPlacements = this.currentTurnPlacements();
+    
     if (board[row][col] !== null) {
-      return false;
+      // Can only replace buildings placed during current turn
+      if (!currentTurnPlacements.has(cellKey)) {
+        return false;
+      }
     }
 
     // During preparation phase, must have building selected
