@@ -30,14 +30,20 @@ export class AppComponent {
   }
 
   onDiceRolled(rolls: number[]): void {
+    const currentState = this.placementState();
+    const wasComplete = currentState === PlacementState.COMPLETE;
+    
     // Clear scoring visualization from previous round
     if (this.gameBoard) {
       this.gameBoard.clearScoringVisualization();
+      // Clear turn placements when rolling new dice after completing a round
+      if (wasComplete) {
+        this.gameBoard.clearCurrentTurnPlacements();
+      }
     }
     
     this.currentRolls.set(rolls);
     
-    const currentState = this.placementState();
     const isPreparation = this.isPreparationPhase(currentState);
     const isBonusStage = this.isBonusStage(currentState);
     
@@ -49,12 +55,12 @@ export class AppComponent {
     // Clear selected building when dice are rolled in prep phase to force new selection
     if (isPreparation) {
       this.selectedBuilding.set(null);
-    }
-    
-    if (this.isDoublesRoll(rolls)) {
-      this.placementState.set(isPreparation ? PlacementState.PREP_DOUBLES_FIRST : PlacementState.DOUBLES_FIRST);
+      // In preparation phase, always use regular prep states (no doubles logic)
+      this.placementState.set(PlacementState.PREP_FIRST);
+    } else if (this.isDoublesRoll(rolls)) {
+      this.placementState.set(PlacementState.DOUBLES_FIRST);
     } else {
-      this.placementState.set(isPreparation ? PlacementState.PREP_FIRST : PlacementState.FIRST);
+      this.placementState.set(PlacementState.FIRST);
     }
   }
 
@@ -81,13 +87,9 @@ export class AppComponent {
     }
     
     // If round is complete, clear dice to prepare for next roll
+    // Keep turn placement indicators visible during scoring
     if (state === PlacementState.COMPLETE) {
       console.log('Round complete, clearing dice');
-      
-      // Clear current turn placements to prevent replacement of buildings from previous turns
-      if (this.gameBoard) {
-        this.gameBoard.clearCurrentTurnPlacements();
-      }
       
       setTimeout(() => {
         this.currentRolls.set(null);
@@ -120,10 +122,10 @@ export class AppComponent {
       // Second placement: first die determines building
       return getBuildingFromDice(rolls[0]);
     } else if (state === PlacementState.DOUBLES_FIRST) {
-      // Doubles first placement: dice value determines building
+      // Doubles: building from dice value
       return getBuildingFromDice(rolls[0]);
     } else if (state === PlacementState.DOUBLES_SQUARE) {
-      // Doubles second placement: always a square
+      // Doubles: square
       return Buildings.SQUARE;
     }
     
@@ -238,19 +240,14 @@ export class AppComponent {
   /**
    * Determines if step switching should be disabled
    * Step switching is disabled during:
-   * - Preparation phases
-   * - Bonus stages  
-   * - Doubles rolls
+   * - Bonus stages
    */
   isStepSwitchingDisabled(): boolean {
     const rolls = this.currentRolls();
     const currentState = this.placementState();
     
-    // Disable if no rolls or during prep/bonus/doubles
-    return !rolls || 
-           this.isPreparationPhase(currentState) || 
-           this.isBonusStage(currentState) || 
-           this.isDoublesRoll(rolls);
+    // Disable if no rolls or during bonus
+    return !rolls || this.isBonusStage(currentState);
   }
 
   /**
@@ -260,17 +257,35 @@ export class AppComponent {
     const rolls = this.currentRolls();
     const currentState = this.placementState();
     
-    // Only allow step switching during regular game (not prep, bonus, or doubles)
-    if (!rolls || this.isPreparationPhase(currentState) || 
-        this.isBonusStage(currentState) || this.isDoublesRoll(rolls)) {
+    // Only allow step switching during regular game and prep phase (not bonus)
+    if (!rolls || this.isBonusStage(currentState)) {
       return;
     }
     
-    // Switch placement state based on selected step
-    if (step === 'first') {
-      this.placementState.set(PlacementState.FIRST);
+    // Handle preparation phase (no doubles logic in prep)
+    if (this.isPreparationPhase(currentState)) {
+      if (step === 'first') {
+        this.placementState.set(PlacementState.PREP_FIRST);
+      } else {
+        this.placementState.set(PlacementState.PREP_SECOND);
+      }
+      return;
+    }
+    
+    // Handle regular game phase
+    // For doubles, use DOUBLES_FIRST for building, DOUBLES_SQUARE for square
+    if (this.isDoublesRoll(rolls)) {
+      if (step === 'first') {
+        this.placementState.set(PlacementState.DOUBLES_FIRST);
+      } else {
+        this.placementState.set(PlacementState.DOUBLES_SQUARE);
+      }
     } else {
-      this.placementState.set(PlacementState.SECOND);
+      if (step === 'first') {
+        this.placementState.set(PlacementState.FIRST);
+      } else {
+        this.placementState.set(PlacementState.SECOND);
+      }
     }
   }
 
@@ -294,8 +309,13 @@ export class AppComponent {
   onResetTurns(): void {
     if (this.gameBoard) {
       this.gameBoard.resetCurrentTurnPlacements();
-      // Reset to first turn after reset
-      this.placementState.set(PlacementState.FIRST);
+      // Reset to appropriate first state based on current phase
+      const currentState = this.placementState();
+      if (this.isPreparationPhase(currentState)) {
+        this.placementState.set(PlacementState.PREP_FIRST);
+      } else {
+        this.placementState.set(PlacementState.FIRST);
+      }
     }
   }
 

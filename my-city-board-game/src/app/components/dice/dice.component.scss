@@ -43,6 +43,22 @@
       &.step-buttons {
         flex-direction: column;
         gap: 0.5rem;
+
+        .doubles-header {
+          font-size: 1.5rem;
+          font-weight: bold;
+          color: var(--success-color);
+          margin: 0 0 0.5rem 0;
+          text-shadow: 0 0 10px rgba(var(--success-rgb), 0.6);
+        }
+
+        .prep-header {
+          font-size: 1.3rem;
+          font-weight: bold;
+          color: #0ef;
+          margin: 0 0 0.5rem 0;
+          text-shadow: 0 0 8px rgba(14, 255, 255, 0.6);
+        }
         
         .step-button {
           min-width: 300px;

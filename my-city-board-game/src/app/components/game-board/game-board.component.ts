@@ -363,11 +363,17 @@ export class GameBoardComponent implements OnInit {
       return;
     }
 
-    // Track turn placements for FIRST and SECOND states
+    // Track turn placements for states that support turn tracking
     if (shouldTrackTurnPlacement(currentPlacementState)) {
-      if (currentPlacementState === PlacementState.FIRST) {
+      if (currentPlacementState === PlacementState.FIRST || 
+          currentPlacementState === PlacementState.DOUBLES_FIRST ||
+          currentPlacementState === PlacementState.PREP_FIRST ||
+          currentPlacementState === PlacementState.PREP_DOUBLES_FIRST) {
         this.gameStateService.markFirstTurnPlaced();
-      } else if (currentPlacementState === PlacementState.SECOND) {
+      } else if (currentPlacementState === PlacementState.SECOND || 
+                 currentPlacementState === PlacementState.DOUBLES_SQUARE ||
+                 currentPlacementState === PlacementState.PREP_SECOND ||
+                 currentPlacementState === PlacementState.PREP_DOUBLES_SECOND) {
         this.gameStateService.markSecondTurnPlaced();
       }
     }

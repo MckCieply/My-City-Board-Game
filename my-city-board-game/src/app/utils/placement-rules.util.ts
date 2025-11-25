@@ -284,12 +284,32 @@ export function getNextPlacementState(
       return PlacementState.FIRST;
 
     case PlacementState.DOUBLES_FIRST:
+      // Check if both turns are complete after marking first as placed
+      if (secondTurnPlaced) {
+        return PlacementState.COMPLETE;
+      }
       return PlacementState.DOUBLES_SQUARE;
 
-    case PlacementState.PREP_SECOND:
-    case PlacementState.PREP_DOUBLES_SECOND:
     case PlacementState.DOUBLES_SQUARE:
-      return PlacementState.COMPLETE;
+      // Check if both turns are complete after marking second as placed
+      if (firstTurnPlaced) {
+        return PlacementState.COMPLETE;
+      }
+      return PlacementState.DOUBLES_FIRST;
+
+    case PlacementState.PREP_SECOND:
+      // Check if first turn was placed before completing prep phase
+      if (firstTurnPlaced) {
+        return PlacementState.COMPLETE;
+      }
+      return PlacementState.PREP_FIRST;
+
+    case PlacementState.PREP_DOUBLES_SECOND:
+      // Check if first turn was placed before completing prep phase
+      if (firstTurnPlaced) {
+        return PlacementState.COMPLETE;
+      }
+      return PlacementState.PREP_DOUBLES_FIRST;
 
     default:
       return currentState;
@@ -298,8 +318,15 @@ export function getNextPlacementState(
 
 /**
  * Checks if the current state should trigger turn tracking
- * (Only FIRST and SECOND states track individual turns)
+ * (FIRST, SECOND, DOUBLES_FIRST, DOUBLES_SQUARE, and PREP states track individual turns)
  */
 export function shouldTrackTurnPlacement(state: PlacementState): boolean {
-  return state === PlacementState.FIRST || state === PlacementState.SECOND;
+  return state === PlacementState.FIRST || 
+         state === PlacementState.SECOND ||
+         state === PlacementState.DOUBLES_FIRST ||
+         state === PlacementState.DOUBLES_SQUARE ||
+         state === PlacementState.PREP_FIRST ||
+         state === PlacementState.PREP_SECOND ||
+         state === PlacementState.PREP_DOUBLES_FIRST ||
+         state === PlacementState.PREP_DOUBLES_SECOND;
 }

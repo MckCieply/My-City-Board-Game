@@ -12,71 +12,99 @@
   <div class="roll-output">
     @if (currentRolls && currentRolls.length > 0) {
       <h2>You rolled: {{ currentRolls.join(", ") }}</h2>
-      @if (isDoubles()) {
-        <p class="dice-info doubles">
-          <span class="die-result special">
-            🎯 DOUBLES! Place
+      @if (isDoubles() && !isPreparationPhase()) {
+        <div class="dice-info step-buttons">
+          <p class="doubles-header">🎯 DOUBLES!</p>
+          <button 
+            mat-raised-button 
+            [color]="selectedStep === 'first' ? 'accent' : 'primary'"
+            (click)="selectStep('first')"
+            class="step-button"
+            [class.selected]="selectedStep === 'first'"
+            [disabled]="isStepDisabled('first')"
+          >
+            Building: Column {{ currentRolls[0] }},
             {{ getBuildingDisplayName(getBuildingFromDice(currentRolls[0])) }}
-            in column {{ currentRolls[0] }}
-          </span>
-          <span class="die-result special">
-            Then place Square anywhere!
-          </span>
-        </p>
-      } @else {
-        @if (stepSwitchingDisabled()) {
-          <p class="dice-info">
-            <span class="die-result">
-              Step 1: Column {{ currentRolls[0] }},
-              {{ getBuildingDisplayName(getBuildingFromDice(currentRolls[1])) }}
-            </span>
-            <span class="die-result">
-              Step 2: Column {{ currentRolls[1] }},
-              {{ getBuildingDisplayName(getBuildingFromDice(currentRolls[0])) }}
-            </span>
-          </p>
-        } @else {
-          <div class="dice-info step-buttons">
-            <button 
-              mat-raised-button 
-              [color]="selectedStep === 'first' ? 'accent' : 'primary'"
-              (click)="selectStep('first')"
-              class="step-button"
-              [class.selected]="selectedStep === 'first'"
-              [disabled]="isStepDisabled('first')"
-            >
-              Step 1: Column {{ currentRolls[0] }},
-              {{ getBuildingDisplayName(getBuildingFromDice(currentRolls[1])) }}
-              @if (isStepDisabled('first')) {
-                <span class="placed-indicator"> ✓</span>
-              }
-            </button>
-            <button 
-              mat-raised-button 
-              [color]="selectedStep === 'second' ? 'accent' : 'primary'"
-              (click)="selectStep('second')"
-              class="step-button"
-              [class.selected]="selectedStep === 'second'"
-              [disabled]="isStepDisabled('second')"
-            >
-              Step 2: Column {{ currentRolls[1] }},
-              {{ getBuildingDisplayName(getBuildingFromDice(currentRolls[0])) }}
-              @if (isStepDisabled('second')) {
-                <span class="placed-indicator"> ✓</span>
-              }
-            </button>
-            @if (shouldShowReset()) {
-              <button 
-                mat-raised-button 
-                color="warn"
-                (click)="onResetTurns()"
-                class="reset-button"
-              >
-                Reset Turns
-              </button>
+            @if (isStepDisabled('first')) {
+              <span class="placed-indicator"> ✓</span>
             }
-          </div>
-        }
+          </button>
+          <button 
+            mat-raised-button 
+            [color]="selectedStep === 'second' ? 'accent' : 'primary'"
+            (click)="selectStep('second')"
+            class="step-button"
+            [class.selected]="selectedStep === 'second'"
+            [disabled]="isStepDisabled('second')"
+          >
+            Square: Any column
+            @if (isStepDisabled('second')) {
+              <span class="placed-indicator"> ✓</span>
+            }
+          </button>
+          @if (shouldShowReset()) {
+            <button 
+              mat-raised-button 
+              color="warn"
+              (click)="onResetTurns()"
+              class="reset-button"
+            >
+              Reset Turns
+            </button>
+          }
+        </div>
+      } @else {
+        <div class="dice-info step-buttons">
+          @if (isPreparationPhase()) {
+            <p class="prep-header">PREPARATION PHASE - Choose Your Building</p>
+          }
+          <button 
+            mat-raised-button 
+            [color]="selectedStep === 'first' ? 'accent' : 'primary'"
+            (click)="selectStep('first')"
+            class="step-button"
+            [class.selected]="selectedStep === 'first'"
+            [disabled]="isStepDisabled('first')"
+          >
+            @if (isPreparationPhase()) {
+              Step 1: Column {{ currentRolls[0] }}, Choose Building
+            } @else {
+              Step 1: Column {{ currentRolls[0] }},
+              {{ getBuildingDisplayName(getBuildingFromDice(currentRolls[1])) }}
+            }
+            @if (isStepDisabled('first')) {
+              <span class="placed-indicator"> ✓</span>
+            }
+          </button>
+          <button 
+            mat-raised-button 
+            [color]="selectedStep === 'second' ? 'accent' : 'primary'"
+            (click)="selectStep('second')"
+            class="step-button"
+            [class.selected]="selectedStep === 'second'"
+            [disabled]="isStepDisabled('second')"
+          >
+            @if (isPreparationPhase()) {
+              Step 2: Column {{ currentRolls[1] }}, Choose Building
+            } @else {
+              Step 2: Column {{ currentRolls[1] }},
+              {{ getBuildingDisplayName(getBuildingFromDice(currentRolls[0])) }}
+            }
+            @if (isStepDisabled('second')) {
+              <span class="placed-indicator"> ✓</span>
+            }
+          </button>
+          @if (shouldShowReset()) {
+            <button 
+              mat-raised-button 
+              color="warn"
+              (click)="onResetTurns()"
+              class="reset-button"
+            >
+              Reset Turns
+            </button>
+          }
+        </div>
       }
     }
   </div>

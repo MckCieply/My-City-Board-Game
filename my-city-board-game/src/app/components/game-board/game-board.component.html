@@ -2,7 +2,10 @@
   <div class="placement-status">
     <h3>{{ getCurrentPlacementText() }}</h3>
   </div>
-  <div class="board-wrapper">
+  <div class="board-wrapper"
+       [class.prep-phase]="inPreparationPhase()"
+       [class.bonus-phase]="inBonusStage()"
+       [class.regular-phase]="!inPreparationPhase() && !inBonusStage()">
     <!-- Empty corner cell -->
     <div class="label-corner"></div>
 

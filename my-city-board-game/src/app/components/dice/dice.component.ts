@@ -33,9 +33,15 @@ export class DiceComponent {
     // Sync selected step with placement state changes
     effect(() => {
       const state = this.placementState();
-      if (state === PlacementState.FIRST) {
+      if (state === PlacementState.FIRST || 
+          state === PlacementState.DOUBLES_FIRST ||
+          state === PlacementState.PREP_FIRST ||
+          state === PlacementState.PREP_DOUBLES_FIRST) {
         this.selectedStep = 'first';
-      } else if (state === PlacementState.SECOND) {
+      } else if (state === PlacementState.SECOND || 
+                 state === PlacementState.DOUBLES_SQUARE ||
+                 state === PlacementState.PREP_SECOND ||
+                 state === PlacementState.PREP_DOUBLES_SECOND) {
         this.selectedStep = 'second';
       }
     });
@@ -81,10 +87,22 @@ export class DiceComponent {
   }
 
   /**
-   * Check if reset button should be shown (at least one turn placed)
+   * Check if in preparation phase
+   */
+  isPreparationPhase(): boolean {
+    const state = this.placementState();
+    return state === PlacementState.PREP_FIRST ||
+           state === PlacementState.PREP_SECOND ||
+           state === PlacementState.PREP_DOUBLES_FIRST ||
+           state === PlacementState.PREP_DOUBLES_SECOND;
+  }
+
+  /**
+   * Check if reset button should be shown (at least one turn placed and not in scoring)
    */
   shouldShowReset(): boolean {
-    return this.firstTurnPlaced() || this.secondTurnPlaced();
+    const isScoring = this.placementState() === PlacementState.COMPLETE;
+    return (this.firstTurnPlaced() || this.secondTurnPlaced()) && !isScoring;
   }
 
   /**
