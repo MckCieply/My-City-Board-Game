@@ -1,0 +1,41 @@
+<div class="scoreboard">
+  <div class="scoreboard__header">
+    <h2>Final Score</h2>
+  </div>
+
+  <div class="scoreboard__content">
+    <div class="scoreboard__rounds">
+      @for (score of footerScores(); track $index) {
+        <div class="scoreboard__round" [class.scoreboard__round--bonus]="isBonusRound($index)">
+          <div class="scoreboard__round-label">
+            Round {{ $index + 1 }}
+            @if (isBonusRound($index)) {
+              <span class="scoreboard__bonus-badge">BONUS</span>
+            }
+          </div>
+          <div class="scoreboard__round-score">{{ score }}</div>
+        </div>
+      }
+    </div>
+
+    @if (plazaBonus() > 0) {
+      <div class="scoreboard__plaza-bonus">
+        <div class="scoreboard__plaza-label">
+          Plaza Bonus
+        </div>
+        <div class="scoreboard__plaza-score">+{{ plazaBonus() }}</div>
+      </div>
+    }
+
+    <div class="scoreboard__total">
+      <div class="scoreboard__total-label">Total Score</div>
+      <div class="scoreboard__total-score">{{ getTotalScore() }}</div>
+    </div>
+  </div>
+
+  <div class="scoreboard__actions">
+    <button class="scoreboard__play-again" (click)="onPlayAgain()">
+      Play Again
+    </button>
+  </div>
+</div>

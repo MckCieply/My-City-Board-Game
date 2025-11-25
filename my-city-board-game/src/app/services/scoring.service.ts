@@ -226,4 +226,64 @@ export class ScoringService {
   isRowScoringStreet(row: number): boolean {
     return this._currentScoringStreet() === row;
   }
+
+  /**
+   * Check if a plaza (square) is adjacent to house, forest, and lake
+   * Returns true if the plaza has all three building types as neighbors (horizontal/vertical only)
+   */
+  private isPlazaAdjacentToAllThree(
+    board: Board,
+    row: number,
+    col: number,
+    config: GameConfig
+  ): boolean {
+    const neighbors = new Set<Buildings>();
+
+    // Check all four adjacent cells (up, down, left, right)
+    const adjacentPositions = [
+      [row - 1, col], // up
+      [row + 1, col], // down
+      [row, col - 1], // left
+      [row, col + 1], // right
+    ];
+
+    for (const [r, c] of adjacentPositions) {
+      if (r >= 0 && r < config.rows && c >= 0 && c < config.cols) {
+        const building = board[r][c];
+        if (building && building !== Buildings.SQUARE) {
+          neighbors.add(building);
+        }
+      }
+    }
+
+    // Check if plaza is adjacent to all three types
+    return (
+      neighbors.has(Buildings.HOUSE) &&
+      neighbors.has(Buildings.FOREST) &&
+      neighbors.has(Buildings.LAKE)
+    );
+  }
+
+  /**
+   * Calculate bonus points for plazas
+   * Each plaza adjacent to house, forest, and lake gets 10 points
+   */
+  calculatePlazaBonus(board: Board, config: GameConfig): number {
+    let bonusScore = 0;
+
+    for (let row = 0; row < config.rows; row++) {
+      for (let col = 0; col < config.cols; col++) {
+        const building = board[row][col];
+        
+        // Check if it's a plaza/square
+        if (building === Buildings.SQUARE) {
+          if (this.isPlazaAdjacentToAllThree(board, row, col, config)) {
+            bonusScore += 10;
+          }
+        }
+      }
+    }
+
+    return bonusScore;
+  }
 }

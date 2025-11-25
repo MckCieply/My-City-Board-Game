@@ -8,8 +8,126 @@ import { PlacementState } from '../models/placement-state.model';
  */
 
 /**
+ * Checks if a column is completely full
+ */
+function isColumnFull(board: Board, col: number): boolean {
+  for (let row = 0; row < board.length; row++) {
+    if (board[row][col] === null) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * Counts empty spaces in a column
+ */
+function countEmptySpaces(board: Board, col: number): number {
+  let count = 0;
+  for (let row = 0; row < board.length; row++) {
+    if (board[row][col] === null) {
+      count++;
+    }
+  }
+  return count;
+}
+
+/**
+ * Gets adjacent columns when the target column is full
+ * Returns columns with more empty spaces, or both if equal
+ */
+function getAdjacentColumns(board: Board, targetCol: number, totalCols: number): number[] {
+  const leftCol = targetCol - 1;
+  const rightCol = targetCol + 1;
+  
+  const hasLeft = leftCol >= 0;
+  const hasRight = rightCol < totalCols;
+  
+  if (!hasLeft && !hasRight) {
+    return []; // No adjacent columns (edge case)
+  }
+  
+  if (!hasLeft) {
+    return [rightCol]; // Only right exists
+  }
+  
+  if (!hasRight) {
+    return [leftCol]; // Only left exists
+  }
+  
+  // Both exist, check which has more empty spaces
+  const leftEmpty = countEmptySpaces(board, leftCol);
+  const rightEmpty = countEmptySpaces(board, rightCol);
+  
+  if (leftEmpty > rightEmpty) {
+    return [leftCol];
+  } else if (rightEmpty > leftEmpty) {
+    return [rightCol];
+  } else {
+    // Equal empty spaces, player can choose
+    return [leftCol, rightCol];
+  }
+}
+
+/**
+ * Determines the allowed columns for a placement based on state and rolls
+ * Returns array of allowed column indices, or null if any column is allowed
+ * If target column is full, returns adjacent columns based on empty space count
+ */
+export function getAllowedColumns(
+  state: PlacementState,
+  rolls: number[],
+  board: Board,
+  totalCols: number = 6
+): number[] | null {
+  if (rolls.length < 2) return null;
+
+  let targetColumn: number | null = null;
+
+  switch (state) {
+    case PlacementState.PREP_FIRST:
+      targetColumn = rolls[0] - 1;
+      break;
+    case PlacementState.PREP_SECOND:
+      targetColumn = rolls[1] - 1;
+      break;
+    case PlacementState.PREP_DOUBLES_FIRST:
+    case PlacementState.PREP_DOUBLES_SECOND:
+      targetColumn = rolls[0] - 1;
+      break;
+    case PlacementState.FIRST:
+      targetColumn = rolls[0] - 1;
+      break;
+    case PlacementState.SECOND:
+      targetColumn = rolls[1] - 1;
+      break;
+    case PlacementState.DOUBLES_FIRST:
+      targetColumn = rolls[0] - 1;
+      break;
+    case PlacementState.DOUBLES_SQUARE:
+      return null; // Any column allowed
+    default:
+      return null;
+  }
+
+  if (targetColumn === null) {
+    return null;
+  }
+
+  // Check if target column is full
+  if (isColumnFull(board, targetColumn)) {
+    // Return adjacent columns
+    return getAdjacentColumns(board, targetColumn, totalCols);
+  }
+
+  // Target column has space, only allow that column
+  return [targetColumn];
+}
+
+/**
  * Determines the allowed column for a placement based on state and rolls
  * @returns column index (0-5) or null if any column is allowed
+ * @deprecated Use getAllowedColumns instead for full column fallback logic
  */
 export function getAllowedColumn(
   state: PlacementState,
@@ -90,7 +208,8 @@ export function canPlaceInCell(
   board: Board,
   selectedBuilding: Buildings | null | undefined,
   currentTurnPlacements: Set<string>,
-  availableBonusBuildings: Buildings[]
+  availableBonusBuildings: Buildings[],
+  totalCols: number = 6
 ): boolean {
   // Bonus stage has special rules (doesn't need dice)
   if (state === PlacementState.BONUS) {
@@ -126,9 +245,9 @@ export function canPlaceInCell(
     return false;
   }
 
-  // Check column restriction
-  const allowedColumn = getAllowedColumn(state, rolls);
-  if (allowedColumn !== null && col !== allowedColumn) {
+  // Check column restriction with full column fallback logic
+  const allowedColumns = getAllowedColumns(state, rolls, board, totalCols);
+  if (allowedColumns !== null && !allowedColumns.includes(col)) {
     return false;
   }
 

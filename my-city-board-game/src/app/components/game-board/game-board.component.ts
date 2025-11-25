@@ -144,6 +144,14 @@ export class GameBoardComponent implements OnInit {
   }
 
   /**
+   * Get plaza bonus score
+   */
+  getPlazaBonus(): number {
+    const board = this.boardService.getBoardState();
+    return this.scoringService.calculatePlazaBonus(board, this.config);
+  }
+
+  /**
    * Clears current turn placements (called when round completes)
    */
   clearCurrentTurnPlacements(): void {
@@ -325,7 +333,8 @@ export class GameBoardComponent implements OnInit {
       board,
       selectedBuildingValue,
       this.currentTurnPlacements(),
-      availableBuildings
+      availableBuildings,
+      this.config.cols
     )) {
       return;
     }
@@ -386,7 +395,8 @@ export class GameBoardComponent implements OnInit {
       board,
       selectedBuildingValue,
       this.currentTurnPlacements(),
-      availableBuildings
+      availableBuildings,
+      this.config.cols
     );
   }
 

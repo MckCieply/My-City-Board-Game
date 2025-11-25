@@ -1,0 +1,202 @@
+.scoreboard {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border: 2px solid #0ef;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 0 20px rgba(14, 255, 255, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  height: fit-content;
+  min-width: 280px;
+}
+
+.scoreboard__header {
+  h2 {
+    margin: 0;
+    color: #0ef;
+    font-size: 1.75rem;
+    font-weight: 700;
+    text-align: center;
+    text-shadow: 0 0 10px rgba(14, 255, 255, 0.8);
+    letter-spacing: 2px;
+  }
+}
+
+.scoreboard__content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.scoreboard__rounds {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.scoreboard__round {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: rgba(14, 255, 255, 0.05);
+  border: 1px solid rgba(14, 255, 255, 0.2);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: rgba(14, 255, 255, 0.1);
+    border-color: rgba(14, 255, 255, 0.4);
+    transform: translateX(4px);
+  }
+
+  &--bonus {
+    background: rgba(255, 0, 255, 0.1);
+    border-color: rgba(255, 0, 255, 0.4);
+
+    &:hover {
+      background: rgba(255, 0, 255, 0.15);
+      border-color: rgba(255, 0, 255, 0.6);
+    }
+
+    .scoreboard__round-label {
+      color: #f0f;
+    }
+
+    .scoreboard__round-score {
+      color: #f0f;
+    }
+  }
+}
+
+.scoreboard__round-label {
+  color: #0ef;
+  font-size: 1rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.scoreboard__bonus-badge {
+  background: rgba(255, 0, 255, 0.3);
+  color: #f0f;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  border: 1px solid #f0f;
+  letter-spacing: 1px;
+}
+
+.scoreboard__round-score {
+  color: #fff;
+  font-size: 1.25rem;
+  font-weight: 700;
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+}
+
+.scoreboard__plaza-bonus {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.875rem 1rem;
+  background: rgba(255, 215, 0, 0.1);
+  border: 1px solid rgba(255, 215, 0, 0.4);
+  border-radius: 8px;
+  margin-top: 0.5rem;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: rgba(255, 215, 0, 0.15);
+    border-color: rgba(255, 215, 0, 0.6);
+    transform: translateX(4px);
+  }
+}
+
+.scoreboard__plaza-label {
+  color: #ffd700;
+  font-size: 1rem;
+  font-weight: 600;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.scoreboard__plaza-score {
+  color: #ffd700;
+  font-size: 1.25rem;
+  font-weight: 700;
+  text-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
+}
+
+.scoreboard__total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, rgba(14, 255, 255, 0.2) 0%, rgba(14, 255, 255, 0.1) 100%);
+  border: 2px solid #0ef;
+  border-radius: 10px;
+  margin-top: 0.5rem;
+  box-shadow: 0 0 15px rgba(14, 255, 255, 0.4);
+}
+
+.scoreboard__total-label {
+  color: #0ef;
+  font-size: 1.25rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-shadow: 0 0 8px rgba(14, 255, 255, 0.6);
+}
+
+.scoreboard__total-score {
+  color: #fff;
+  font-size: 2rem;
+  font-weight: 900;
+  text-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    text-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
+  }
+  50% {
+    text-shadow: 0 0 25px rgba(14, 255, 255, 1), 0 0 35px rgba(14, 255, 255, 0.8);
+  }
+}
+
+.scoreboard__actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 0.5rem;
+}
+
+.scoreboard__play-again {
+  background: linear-gradient(135deg, #0ef 0%, #00b8d4 100%);
+  color: #1a1a2e;
+  border: none;
+  border-radius: 8px;
+  padding: 0.875rem 2rem;
+  font-size: 1.125rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  box-shadow: 0 0 15px rgba(14, 255, 255, 0.5);
+
+  &:hover {
+    background: linear-gradient(135deg, #00b8d4 0%, #0ef 100%);
+    box-shadow: 0 0 25px rgba(14, 255, 255, 0.8);
+    transform: translateY(-2px);
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 0 10px rgba(14, 255, 255, 0.6);
+  }
+}

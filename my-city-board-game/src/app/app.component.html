@@ -17,13 +17,25 @@
       [disabledBuildings]="getDisabledBuildings()"
     />
   </div>
-  <div class="app_board">
-    <app-game-board
-      #gameBoard
-      [currentRolls]="currentRolls()"
-      [placementState]="placementState()"
-      [selectedBuilding]="getSelectedBuildingForPlacement()"
-      (placementStateChanged)="onPlacementStateChange($event)"
-    />
+  <div class="app_content">
+    <div class="app_board">
+      <app-game-board
+        #gameBoard
+        [currentRolls]="currentRolls()"
+        [placementState]="placementState()"
+        [selectedBuilding]="getSelectedBuildingForPlacement()"
+        (placementStateChanged)="onPlacementStateChange($event)"
+      />
+    </div>
+    @if (isGameComplete()) {
+      <div class="app_scoreboard">
+        <app-scoreboard
+          [footerScores]="getFooterScores()"
+          [bonusStageRounds]="getBonusStageRounds()"
+          [plazaBonus]="getPlazaBonus()"
+          (playAgain)="onPlayAgain()"
+        />
+      </div>
+    }
   </div>
 </div>

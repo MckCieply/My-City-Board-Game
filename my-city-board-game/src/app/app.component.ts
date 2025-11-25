@@ -2,13 +2,14 @@ import { Component, signal, ViewChild } from '@angular/core';
 import { DiceComponent } from './components/dice/dice.component';
 import { GameBoardComponent } from './components/game-board/game-board.component';
 import { HeaderComponent } from './components/header/header.component';
+import { ScoreboardComponent } from './components/scoreboard/scoreboard.component';
 import { Buildings, getBuildingFromDice } from './models/buildings.model';
 import { PlacementState } from './models/placement-state.model';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [GameBoardComponent, DiceComponent, HeaderComponent],
+  imports: [GameBoardComponent, DiceComponent, HeaderComponent, ScoreboardComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
 })
@@ -290,6 +291,46 @@ export class AppComponent {
       this.gameBoard.resetCurrentTurnPlacements();
       // Reset to first turn after reset
       this.placementState.set(PlacementState.FIRST);
+    }
+  }
+
+  /**
+   * Get game complete status from game board
+   */
+  isGameComplete(): boolean {
+    return this.gameBoard ? this.gameBoard.gameComplete() : false;
+  }
+
+  /**
+   * Get footer scores from game board
+   */
+  getFooterScores(): number[] {
+    return this.gameBoard ? this.gameBoard.footerScores() : [];
+  }
+
+  /**
+   * Get bonus stage rounds from game board
+   */
+  getBonusStageRounds(): number[] {
+    return this.gameBoard ? this.gameBoard.bonusStageRounds : [];
+  }
+
+  /**
+   * Get plaza bonus score from game board
+   */
+  getPlazaBonus(): number {
+    return this.gameBoard ? this.gameBoard.getPlazaBonus() : 0;
+  }
+
+  /**
+   * Handle play again action - resets the entire game
+   */
+  onPlayAgain(): void {
+    if (this.gameBoard) {
+      this.gameBoard.resetGame();
+      this.currentRolls.set(null);
+      this.placementState.set(PlacementState.PREP_FIRST);
+      this.selectedBuilding.set(null);
     }
   }
 }
