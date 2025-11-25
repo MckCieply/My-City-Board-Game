@@ -3,8 +3,12 @@
     <app-dice 
       (diceRolled)="onDiceRolled($event)" 
       (stepSelected)="onStepSelected($event)"
+      (resetTurns)="onResetTurns()"
       [disabled]="isDiceRollingDisabled()"
-      [stepSwitchingDisabled]="isStepSwitchingDisabled()" 
+      [stepSwitchingDisabled]="isStepSwitchingDisabled()"
+      [placementState]="placementState()"
+      [firstTurnPlaced]="getFirstTurnPlaced()"
+      [secondTurnPlaced]="getSecondTurnPlaced()"
     />
     <app-header
       (buttonClicked)="buildingSelected($event)"

@@ -53,6 +53,17 @@ export class BoardService {
   }
 
   /**
+   * Clear a cell (set to null)
+   */
+  clearCell(row: number, col: number): void {
+    this._board.update((currentBoard) => {
+      const newBoard = currentBoard.map((r) => [...r]);
+      newBoard[row][col] = null;
+      return newBoard;
+    });
+  }
+
+  /**
    * Reset the board to empty state
    */
   resetBoard(config: GameConfig): void {

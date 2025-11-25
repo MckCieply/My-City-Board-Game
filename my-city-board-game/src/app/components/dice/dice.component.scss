@@ -56,9 +56,32 @@
             transform: scale(1.02);
           }
           
-          &:hover:not(.selected) {
+          &:hover:not(.selected):not(:disabled) {
             transform: translateY(-1px);
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+          }
+
+          &:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+          }
+
+          .placed-indicator {
+            color: var(--success-color);
+            font-weight: bold;
+            margin-left: 0.5rem;
+          }
+        }
+
+        .reset-button {
+          min-width: 200px;
+          margin-top: 0.5rem;
+          font-size: 0.85rem;
+          transition: all 0.3s ease;
+
+          &:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(var(--warn-rgb, 244, 67, 54), 0.4);
           }
         }
       }

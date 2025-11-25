@@ -43,9 +43,13 @@
               (click)="selectStep('first')"
               class="step-button"
               [class.selected]="selectedStep === 'first'"
+              [disabled]="isStepDisabled('first')"
             >
               Step 1: Column {{ currentRolls[0] }},
               {{ getBuildingDisplayName(getBuildingFromDice(currentRolls[1])) }}
+              @if (isStepDisabled('first')) {
+                <span class="placed-indicator"> ✓</span>
+              }
             </button>
             <button 
               mat-raised-button 
@@ -53,10 +57,24 @@
               (click)="selectStep('second')"
               class="step-button"
               [class.selected]="selectedStep === 'second'"
+              [disabled]="isStepDisabled('second')"
             >
               Step 2: Column {{ currentRolls[1] }},
               {{ getBuildingDisplayName(getBuildingFromDice(currentRolls[0])) }}
+              @if (isStepDisabled('second')) {
+                <span class="placed-indicator"> ✓</span>
+              }
             </button>
+            @if (shouldShowReset()) {
+              <button 
+                mat-raised-button 
+                color="warn"
+                (click)="onResetTurns()"
+                class="reset-button"
+              >
+                Reset Turns
+              </button>
+            }
           </div>
         }
       }

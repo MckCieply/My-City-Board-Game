@@ -40,6 +40,11 @@ export class AppComponent {
       return;
     }
     
+    // Clear selected building when dice are rolled in prep phase to force new selection
+    if (isPreparation) {
+      this.selectedBuilding.set(null);
+    }
+    
     if (this.isDoublesRoll(rolls)) {
       this.placementState.set(isPreparation ? PlacementState.PREP_DOUBLES_FIRST : PlacementState.DOUBLES_FIRST);
     } else {
@@ -50,6 +55,12 @@ export class AppComponent {
   onPlacementStateChange(state: PlacementState): void {
     console.log(`Placement state changing to: ${state}`);
     this.placementState.set(state);
+    
+    // Clear selected building when moving to second prep placement (after first placement)
+    if (state === PlacementState.PREP_SECOND || state === PlacementState.PREP_DOUBLES_SECOND) {
+      this.selectedBuilding.set(null);
+      console.log('First prep placement done, cleared selected building for second placement');
+    }
     
     // If entering bonus stage, clear selected building to force new selection
     if (state === PlacementState.BONUS) {
@@ -137,9 +148,20 @@ export class AppComponent {
 
   /**
    * Checks if building selection is enabled (during preparation phase or bonus stage)
+   * In prep phase, dice must be rolled first before selection is enabled
    */
   isBuildingSelectionEnabled(): boolean {
-    return this.isPreparationPhase(this.placementState()) || this.isBonusStage(this.placementState());
+    const state = this.placementState();
+    const isPrep = this.isPreparationPhase(state);
+    const isBonus = this.isBonusStage(state);
+    
+    // In prep phase, require dice to be rolled before enabling selection
+    if (isPrep) {
+      return this.currentRolls() !== null;
+    }
+    
+    // Bonus stage always allows selection
+    return isBonus;
   }
 
   /**
@@ -243,6 +265,31 @@ export class AppComponent {
       this.placementState.set(PlacementState.FIRST);
     } else {
       this.placementState.set(PlacementState.SECOND);
+    }
+  }
+
+  /**
+   * Get first turn placed status from game board
+   */
+  getFirstTurnPlaced(): boolean {
+    return this.gameBoard ? this.gameBoard.firstTurnPlaced() : false;
+  }
+
+  /**
+   * Get second turn placed status from game board
+   */
+  getSecondTurnPlaced(): boolean {
+    return this.gameBoard ? this.gameBoard.secondTurnPlaced() : false;
+  }
+
+  /**
+   * Reset current turn placements - removes buildings placed in current roll
+   */
+  onResetTurns(): void {
+    if (this.gameBoard) {
+      this.gameBoard.resetCurrentTurnPlacements();
+      // Reset to first turn after reset
+      this.placementState.set(PlacementState.FIRST);
     }
   }
 }

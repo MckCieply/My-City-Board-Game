@@ -151,6 +151,24 @@ export class GameBoardComponent implements OnInit {
   }
 
   /**
+   * Reset current turn placements and remove buildings placed in this turn
+   */
+  resetCurrentTurnPlacements(): void {
+    const placedCells = this.currentTurnPlacements();
+    
+    // Remove buildings from cells placed in current turn
+    placedCells.forEach(cellKey => {
+      const [row, col] = cellKey.split('-').map(Number);
+      if (!isNaN(row) && !isNaN(col)) {
+        this.boardService.clearCell(row, col);
+      }
+    });
+    
+    // Clear the tracking
+    this.gameStateService.clearCurrentTurnPlacements();
+  }
+
+  /**
    * Reset game to initial state
    */
   resetGame(): void {
