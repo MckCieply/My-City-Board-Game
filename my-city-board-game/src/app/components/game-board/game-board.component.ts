@@ -127,28 +127,19 @@ export class GameBoardComponent implements OnInit {
     const diceSum = rolls[0] + rolls[1];
     const board = this.boardService.getBoardState();
     
-    // Show scoring visualization
+    // Calculate and update score
+    const score = this.scoringService.calculateStreetScore(diceSum, board, this.config);
+    const roundIndex = this.currentRound() - 1;
+    this.gameStateService.setRoundScore(roundIndex, score);
+    
+    // Show scoring visualization (will stay visible until next dice roll)
     this.scoringService.showScoringVisualization(diceSum, board, this.config);
     
-    // Calculate score after a brief delay to show the visualization
-    setTimeout(() => {
-      const score = this.scoringService.calculateStreetScore(diceSum, board, this.config);
-      
-      // Update footer scores for current round
-      const roundIndex = this.currentRound() - 1;
-      this.gameStateService.setRoundScore(roundIndex, score);
-      
-      // Clear visualization after scoring
-      setTimeout(() => {
-        this.scoringService.clearScoringVisualization();
-        
-        // Advance to next round after scoring is complete
-        this.gameStateService.advanceRound(this.config.maxRounds);
-        
-        // Emit COMPLETE state to trigger dice clearing and prepare for next round
-        this.placementStateChanged.emit(PlacementState.COMPLETE);
-      }, 2000);
-    }, 500);
+    // Advance to next round
+    this.gameStateService.advanceRound(this.config.maxRounds);
+    
+    // Emit COMPLETE state to trigger dice clearing and prepare for next round
+    this.placementStateChanged.emit(PlacementState.COMPLETE);
   }
 
   /**
@@ -189,6 +180,13 @@ export class GameBoardComponent implements OnInit {
     
     // Clear the tracking
     this.gameStateService.clearCurrentTurnPlacements();
+  }
+
+  /**
+   * Clear scoring visualization
+   */
+  clearScoringVisualization(): void {
+    this.scoringService.clearScoringVisualization();
   }
 
   /**

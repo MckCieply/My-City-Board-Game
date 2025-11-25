@@ -30,6 +30,11 @@ export class AppComponent {
   }
 
   onDiceRolled(rolls: number[]): void {
+    // Clear scoring visualization from previous round
+    if (this.gameBoard) {
+      this.gameBoard.clearScoringVisualization();
+    }
+    
     this.currentRolls.set(rolls);
     
     const currentState = this.placementState();
