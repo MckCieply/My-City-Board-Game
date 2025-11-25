@@ -87,7 +87,7 @@ export class GameBoardComponent implements OnInit {
 
 
   /**
-   * Complete the current round and calculate scoring
+   * Complete the building phase and trigger bonus or scoring
    */
   completeRound(): void {
     const rolls = this.currentRolls();
@@ -101,8 +101,28 @@ export class GameBoardComponent implements OnInit {
     // Handle preparation phase differently (no scoring)
     if (this.inPreparationPhase()) {
       this.gameStateService.exitPreparationPhase();
+      this.placementStateChanged.emit(PlacementState.COMPLETE);
       return;
     }
+    
+    // Check if current round triggers a bonus stage BEFORE scoring
+    const currentRoundNum = this.currentRound();
+    if (this.config.bonusStageRounds.includes(currentRoundNum)) {
+      this.gameStateService.startBonusStage();
+      this.placementStateChanged.emit(PlacementState.BONUS);
+      return; // Wait for bonus placement before scoring
+    }
+    
+    // No bonus stage, proceed directly to scoring
+    this.performScoring();
+  }
+
+  /**
+   * Perform scoring after building and bonus phases are complete
+   */
+  private performScoring(): void {
+    const rolls = this.currentRolls();
+    if (!rolls || rolls.length !== 2) return;
     
     const diceSum = rolls[0] + rolls[1];
     const board = this.boardService.getBoardState();
@@ -122,16 +142,11 @@ export class GameBoardComponent implements OnInit {
       setTimeout(() => {
         this.scoringService.clearScoringVisualization();
         
-        // Check if current round triggers a bonus stage (after completing it)
-        const currentRoundNum = this.currentRound();
-        if (this.config.bonusStageRounds.includes(currentRoundNum)) {
-          this.gameStateService.startBonusStage();
-          this.placementStateChanged.emit(PlacementState.BONUS);
-          return; // Stay on current round, wait for bonus placement
-        }
-        
-        // Advance to next round
+        // Advance to next round after scoring is complete
         this.gameStateService.advanceRound(this.config.maxRounds);
+        
+        // Emit COMPLETE state to trigger dice clearing and prepare for next round
+        this.placementStateChanged.emit(PlacementState.COMPLETE);
       }, 2000);
     }, 500);
   }
@@ -369,6 +384,9 @@ export class GameBoardComponent implements OnInit {
     // If round is complete, trigger completion logic
     if (nextState === PlacementState.COMPLETE) {
       this.completeRound();
+      // Don't emit nextState here - completeRound will handle state transitions
+      // (either to BONUS or stay in COMPLETE for scoring)
+      return;
     }
 
     this.placementStateChanged.emit(nextState);
@@ -418,19 +436,14 @@ export class GameBoardComponent implements OnInit {
   }
 
   /**
-   * Completes a bonus stage placement
+   * Completes a bonus stage placement and proceeds to scoring
    */
   completeBonusStage(placedBuilding: Buildings): void {
     // Complete bonus stage in game state service
     this.gameStateService.completeBonusStage(placedBuilding);
     
-    // Advance to next round after bonus completion
-    this.gameStateService.advanceRound(this.config.maxRounds);
-    
-    // Clear any existing dice rolls and reset to complete state
-    setTimeout(() => {
-      this.placementStateChanged.emit(PlacementState.COMPLETE);
-    }, 100);
+    // After bonus stage, proceed to scoring phase
+    this.performScoring();
   }
 
 }
