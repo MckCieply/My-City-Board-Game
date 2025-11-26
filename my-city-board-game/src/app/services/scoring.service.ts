@@ -13,6 +13,7 @@ export class ScoringService {
   // Scoring visualization
   private _currentScoringStreet = signal<number>(-1);
   private _currentScoringGroups = signal<Set<string>>(new Set());
+  private _showPlazaBonus = signal<boolean>(false);
 
   get currentScoringStreet() {
     return this._currentScoringStreet.asReadonly();
@@ -22,6 +23,10 @@ export class ScoringService {
     return this._currentScoringGroups.asReadonly();
   }
 
+  get showPlazaBonus() {
+    return this._showPlazaBonus.asReadonly();
+  }
+
   /**
    * Calculate score for a specific street (row) based on dice sum
    */
@@ -29,12 +34,12 @@ export class ScoringService {
     diceSum: number,
     board: Board,
     config: GameConfig,
-    playerCanChoose = false
+    selectedRow: number | null = null
   ): number {
     const targetRow = this.getTargetRowFromDiceSum(
       diceSum,
-      playerCanChoose,
-      config
+      config,
+      selectedRow
     );
     if (targetRow === -1) return 0;
 
@@ -84,12 +89,12 @@ export class ScoringService {
    */
   getTargetRowFromDiceSum(
     diceSum: number,
-    playerCanChoose: boolean,
-    config: GameConfig
+    config: GameConfig,
+    selectedRow: number | null = null
   ): number {
     if (diceSum === 2 || diceSum === 12) {
-      // Player can choose - for now return -1 to indicate choice needed
-      return playerCanChoose ? -1 : 0; // Default to first row if not choosing
+      // Player can choose which row to score
+      return selectedRow !== null ? selectedRow : -1;
     }
 
     // Map dice sum to row index
@@ -159,9 +164,10 @@ export class ScoringService {
   showScoringVisualization(
     diceSum: number,
     board: Board,
-    config: GameConfig
+    config: GameConfig,
+    selectedRow: number | null = null
   ): void {
-    const targetRow = this.getTargetRowFromDiceSum(diceSum, false, config);
+    const targetRow = this.getTargetRowFromDiceSum(diceSum, config, selectedRow);
     if (targetRow === -1) return;
 
     this._currentScoringStreet.set(targetRow);
@@ -206,11 +212,19 @@ export class ScoringService {
   }
 
   /**
+   * Show plaza bonus visualization
+   */
+  showPlazaBonusVisualization(): void {
+    this._showPlazaBonus.set(true);
+  }
+
+  /**
    * Clear scoring visualization
    */
   clearScoringVisualization(): void {
     this._currentScoringStreet.set(-1);
     this._currentScoringGroups.set(new Set());
+    this._showPlazaBonus.set(false);
   }
 
   /**
@@ -231,7 +245,7 @@ export class ScoringService {
    * Check if a plaza (square) is adjacent to house, forest, and lake
    * Returns true if the plaza has all three building types as neighbors (horizontal/vertical only)
    */
-  private isPlazaAdjacentToAllThree(
+  isPlazaAdjacentToAllThree(
     board: Board,
     row: number,
     col: number,
@@ -262,6 +276,56 @@ export class ScoringService {
       neighbors.has(Buildings.FOREST) &&
       neighbors.has(Buildings.LAKE)
     );
+  }
+
+  /**
+   * Get all plazas that qualify for bonus and their adjacent buildings
+   * Returns array of objects with plaza location and adjacent building locations
+   */
+  getPlazaBonusCells(board: Board, config: GameConfig): Array<{
+    plaza: { row: number; col: number };
+    adjacentBuildings: Array<{ row: number; col: number; building: Buildings }>;
+  }> {
+    const result: Array<{
+      plaza: { row: number; col: number };
+      adjacentBuildings: Array<{ row: number; col: number; building: Buildings }>;
+    }> = [];
+
+    for (let row = 0; row < config.rows; row++) {
+      for (let col = 0; col < config.cols; col++) {
+        const building = board[row][col];
+        
+        // Check if it's a plaza/square
+        if (building === Buildings.SQUARE) {
+          if (this.isPlazaAdjacentToAllThree(board, row, col, config)) {
+            // Get the adjacent buildings that contribute to the bonus
+            const adjacentBuildings: Array<{ row: number; col: number; building: Buildings }> = [];
+            const adjacentPositions = [
+              [row - 1, col], // up
+              [row + 1, col], // down
+              [row, col - 1], // left
+              [row, col + 1], // right
+            ];
+
+            for (const [r, c] of adjacentPositions) {
+              if (r >= 0 && r < config.rows && c >= 0 && c < config.cols) {
+                const adjBuilding = board[r][c];
+                if (adjBuilding && adjBuilding !== Buildings.SQUARE) {
+                  adjacentBuildings.push({ row: r, col: c, building: adjBuilding });
+                }
+              }
+            }
+
+            result.push({
+              plaza: { row, col },
+              adjacentBuildings
+            });
+          }
+        }
+      }
+    }
+
+    return result;
   }
 
   /**

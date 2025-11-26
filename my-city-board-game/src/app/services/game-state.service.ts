@@ -26,6 +26,9 @@ export class GameStateService {
   private _currentTurnPlacements = signal<Set<string>>(new Set());
   private _firstTurnPlaced = signal<boolean>(false);
   private _secondTurnPlaced = signal<boolean>(false);
+  
+  // Row selection for scoring (when dice sum is 2 or 12)
+  private _selectedScoringRow = signal<number | null>(null);
 
   // Read-only accessors
   get currentRound() {
@@ -66,6 +69,14 @@ export class GameStateService {
 
   get secondTurnPlaced() {
     return this._secondTurnPlaced.asReadonly();
+  }
+  
+  get selectedScoringRow() {
+    return this._selectedScoringRow.asReadonly();
+  }
+  
+  setSelectedScoringRow(row: number | null): void {
+    this._selectedScoringRow.set(row);
   }
 
   /**

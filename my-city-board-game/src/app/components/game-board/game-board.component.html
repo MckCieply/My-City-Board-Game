@@ -17,23 +17,32 @@
     <!-- Row labels and cells -->
     @for (row of board(); track $rowIndex; let $rowIndex = $index) {
       <!-- Row label (left) -->
-      <div class="label-row" [class.scoring-street]="isRowScoringStreet($rowIndex)">{{ rowLabels[$rowIndex] }}</div>
+      <div class="label-row" 
+           [class.scoring-street]="isRowScoringStreet($rowIndex)"
+           [class.row-selectable]="placementState() === 'row_selection'"
+           (click)="placementState() === 'row_selection' ? selectScoringRow($rowIndex) : null">
+        {{ rowLabels[$rowIndex] }}
+      </div>
 
       <!-- Cells for this row -->
       @for (cell of row; track $colIndex; let $colIndex = $index) {
         <div
           class="cell"
           [class.disabled]="!currentRolls() || currentRolls()?.length !== 2"
-          [class.clickable]="isCellClickable($rowIndex, $colIndex)"
+          [class.clickable]="isCellClickable($rowIndex, $colIndex) || placementState() === 'row_selection'"
           [class.not-allowed]="
             currentRolls() &&
             currentRolls()?.length === 2 &&
             !isCellClickable($rowIndex, $colIndex) &&
-            !isCellOccupied($rowIndex, $colIndex)
+            !isCellOccupied($rowIndex, $colIndex) &&
+            placementState() !== 'row_selection'
           "
           [class.occupied]="isCellOccupied($rowIndex, $colIndex)"
           [class.scoring-street]="isRowScoringStreet($rowIndex)"
           [class.scoring-group]="isCellInScoringGroup($rowIndex, $colIndex)"
+          [class.row-selectable]="placementState() === 'row_selection'"
+          [class.plaza-bonus]="isCellPlazaBonus($rowIndex, $colIndex)"
+          [class.adjacent-to-plaza-bonus]="isCellAdjacentToPlazaBonus($rowIndex, $colIndex)"
           (click)="handleCellClick($rowIndex, $colIndex)"
         >
           @if (getCellPoints($rowIndex, $colIndex) > 0) {

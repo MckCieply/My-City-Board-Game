@@ -9,4 +9,5 @@ export enum PlacementState {
   DOUBLES_FIRST = 'doubles_first',
   DOUBLES_SQUARE = 'doubles_square',
   BONUS = 'bonus',
+  ROW_SELECTION = 'row_selection',
 }

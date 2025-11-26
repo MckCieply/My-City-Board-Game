@@ -91,6 +91,12 @@ export class AppComponent {
     if (state === PlacementState.COMPLETE) {
       console.log('Round complete, clearing dice');
       
+      // Check if game is complete and show plaza bonus visualization
+      if (this.gameBoard && this.gameBoard.gameComplete()) {
+        this.gameBoard.clearScoringVisualization();
+        this.gameBoard.showPlazaBonusVisualization();
+      }
+      
       setTimeout(() => {
         this.currentRolls.set(null);
         console.log('Dice cleared, ready for new roll');

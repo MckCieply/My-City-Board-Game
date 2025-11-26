@@ -52,6 +52,8 @@ export class GameBoardComponent implements OnInit {
   secondTurnPlaced = this.gameStateService.secondTurnPlaced;
   usedBonusBuildings = this.gameStateService.usedBonusBuildings;
   bonusStageBuildings = this.gameStateService.bonusStageBuildings;
+  selectedScoringRow = this.gameStateService.selectedScoringRow;
+  showPlazaBonus = this.scoringService.showPlazaBonus;
 
   // Expose configuration to template
   get rowLabels() {
@@ -113,7 +115,14 @@ export class GameBoardComponent implements OnInit {
       return; // Wait for bonus placement before scoring
     }
     
-    // No bonus stage, proceed directly to scoring
+    // No bonus stage, check if row selection needed, otherwise proceed to scoring
+    const diceSum = rolls[0] + rolls[1];
+    if (diceSum === 2 || diceSum === 12) {
+      // Enter row selection state
+      this.placementStateChanged.emit(PlacementState.ROW_SELECTION);
+      return;
+    }
+    
     this.performScoring();
   }
 
@@ -126,14 +135,28 @@ export class GameBoardComponent implements OnInit {
     
     const diceSum = rolls[0] + rolls[1];
     const board = this.boardService.getBoardState();
+    const selectedRow = this.gameStateService.selectedScoringRow();
     
-    // Calculate and update score
-    const score = this.scoringService.calculateStreetScore(diceSum, board, this.config);
+    // Calculate and update score (use selected row if dice sum is 2 or 12)
+    const score = this.scoringService.calculateStreetScore(
+      diceSum, 
+      board, 
+      this.config,
+      selectedRow
+    );
     const roundIndex = this.currentRound() - 1;
     this.gameStateService.setRoundScore(roundIndex, score);
     
     // Show scoring visualization (will stay visible until next dice roll)
-    this.scoringService.showScoringVisualization(diceSum, board, this.config);
+    this.scoringService.showScoringVisualization(
+      diceSum, 
+      board, 
+      this.config,
+      selectedRow
+    );
+    
+    // Clear selected row
+    this.gameStateService.setSelectedScoringRow(null);
     
     // Advance to next round
     this.gameStateService.advanceRound(this.config.maxRounds);
@@ -183,6 +206,14 @@ export class GameBoardComponent implements OnInit {
   }
 
   /**
+   * Select a row for scoring when dice sum is 2 or 12
+   */
+  selectScoringRow(row: number): void {
+    this.gameStateService.setSelectedScoringRow(row);
+    this.performScoring();
+  }
+
+  /**
    * Clear scoring visualization
    */
   clearScoringVisualization(): void {
@@ -210,6 +241,42 @@ export class GameBoardComponent implements OnInit {
    */
   isRowScoringStreet(row: number): boolean {
     return this.scoringService.isRowScoringStreet(row);
+  }
+
+  /**
+   * Check if a cell is a plaza that qualifies for bonus
+   */
+  isCellPlazaBonus(row: number, col: number): boolean {
+    if (!this.showPlazaBonus()) return false;
+    const board = this.boardService.getBoardState();
+    const cell = board[row][col];
+    if (cell !== Buildings.SQUARE) return false;
+    return this.scoringService.isPlazaAdjacentToAllThree(board, row, col, this.config);
+  }
+
+  /**
+   * Check if a cell is adjacent to a plaza bonus (one of the three required buildings)
+   */
+  isCellAdjacentToPlazaBonus(row: number, col: number): boolean {
+    if (!this.showPlazaBonus()) return false;
+    const board = this.boardService.getBoardState();
+    const plazaBonusCells = this.scoringService.getPlazaBonusCells(board, this.config);
+    
+    for (const plazaBonus of plazaBonusCells) {
+      for (const adj of plazaBonus.adjacentBuildings) {
+        if (adj.row === row && adj.col === col) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Show plaza bonus visualization
+   */
+  showPlazaBonusVisualization(): void {
+    this.scoringService.showPlazaBonusVisualization();
   }
 
   /**
@@ -301,6 +368,9 @@ export class GameBoardComponent implements OnInit {
         } else {
           return `Bonus Stage (Round ${this.currentRound()}) - Place ${this.getBuildingDisplayName(selectedBonusBuilding)} anywhere!`;
         }
+      case PlacementState.ROW_SELECTION:
+        const diceSum = rolls[0] + rolls[1];
+        return `Round ${round} - You rolled ${diceSum}! Click any row to score it.`;
       case PlacementState.COMPLETE:
         if (this.inPreparationPhase()) {
           return 'Preparation complete! Roll dice for next turn.';
@@ -325,6 +395,12 @@ export class GameBoardComponent implements OnInit {
     const rolls = this.currentRolls();
     const currentPlacementState = this.placementState();
     const selectedBuildingValue = this.selectedBuilding();
+
+    // Handle row selection for dice sum 2 or 12
+    if (currentPlacementState === PlacementState.ROW_SELECTION) {
+      this.selectScoringRow(row);
+      return;
+    }
 
     // Determine what building to place
     const buildingToPlace = getBuildingToPlace(
