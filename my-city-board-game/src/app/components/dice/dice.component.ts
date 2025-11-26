@@ -1,4 +1,4 @@
-import { Component, effect, input, output } from '@angular/core';
+import { Component, effect, inject, input, output } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import {
   Buildings,
@@ -6,6 +6,8 @@ import {
   getBuildingFromDice,
 } from '../../models/buildings.model';
 import { PlacementState } from '../../models/placement-state.model';
+import { GameStateService } from '../../services/game-state.service';
+import { isFirstPlacement, isPreparationPhase, isSecondPlacement } from '../../utils/placement-state.util';
 
 @Component({
   selector: 'app-dice',
@@ -15,14 +17,18 @@ import { PlacementState } from '../../models/placement-state.model';
   styleUrl: './dice.component.scss',
 })
 export class DiceComponent {
+  private gameStateService = inject(GameStateService);
+
   disabled = input<boolean>(false);
   stepSwitchingDisabled = input<boolean>(false);
   placementState = input<PlacementState>(PlacementState.FIRST);
-  firstTurnPlaced = input<boolean>(false);
-  secondTurnPlaced = input<boolean>(false);
   diceRolled = output<number[]>();
   stepSelected = output<'first' | 'second'>();
   resetTurns = output<void>();
+
+  // Get turn placement signals from service
+  firstTurnPlaced = this.gameStateService.firstTurnPlaced;
+  secondTurnPlaced = this.gameStateService.secondTurnPlaced;
 
   public diceValues: number[] = [1, 2, 3, 4, 5, 6];
 
@@ -33,15 +39,9 @@ export class DiceComponent {
     // Sync selected step with placement state changes
     effect(() => {
       const state = this.placementState();
-      if (state === PlacementState.FIRST || 
-          state === PlacementState.DOUBLES_FIRST ||
-          state === PlacementState.PREP_FIRST ||
-          state === PlacementState.PREP_DOUBLES_FIRST) {
+      if (isFirstPlacement(state)) {
         this.selectedStep = 'first';
-      } else if (state === PlacementState.SECOND || 
-                 state === PlacementState.DOUBLES_SQUARE ||
-                 state === PlacementState.PREP_SECOND ||
-                 state === PlacementState.PREP_DOUBLES_SECOND) {
+      } else if (isSecondPlacement(state)) {
         this.selectedStep = 'second';
       }
     });
@@ -90,11 +90,7 @@ export class DiceComponent {
    * Check if in preparation phase
    */
   isPreparationPhase(): boolean {
-    const state = this.placementState();
-    return state === PlacementState.PREP_FIRST ||
-           state === PlacementState.PREP_SECOND ||
-           state === PlacementState.PREP_DOUBLES_FIRST ||
-           state === PlacementState.PREP_DOUBLES_SECOND;
+    return isPreparationPhase(this.placementState());
   }
 
   /**

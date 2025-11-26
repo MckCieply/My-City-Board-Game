@@ -30,50 +30,18 @@ export class GameStateService {
   // Row selection for scoring (when dice sum is 2 or 12)
   private _selectedScoringRow = signal<number | null>(null);
 
-  // Read-only accessors
-  get currentRound() {
-    return this._currentRound.asReadonly();
-  }
-
-  get gameComplete() {
-    return this._gameComplete.asReadonly();
-  }
-
-  get inPreparationPhase() {
-    return this._inPreparationPhase.asReadonly();
-  }
-
-  get footerScores() {
-    return this._footerScores.asReadonly();
-  }
-
-  get inBonusStage() {
-    return this._inBonusStage.asReadonly();
-  }
-
-  get usedBonusBuildings() {
-    return this._usedBonusBuildings.asReadonly();
-  }
-
-  get bonusStageBuildings() {
-    return this._bonusStageBuildings.asReadonly();
-  }
-
-  get currentTurnPlacements() {
-    return this._currentTurnPlacements.asReadonly();
-  }
-
-  get firstTurnPlaced() {
-    return this._firstTurnPlaced.asReadonly();
-  }
-
-  get secondTurnPlaced() {
-    return this._secondTurnPlaced.asReadonly();
-  }
-  
-  get selectedScoringRow() {
-    return this._selectedScoringRow.asReadonly();
-  }
+  // Expose readonly signals directly
+  readonly currentRound = this._currentRound.asReadonly();
+  readonly gameComplete = this._gameComplete.asReadonly();
+  readonly inPreparationPhase = this._inPreparationPhase.asReadonly();
+  readonly footerScores = this._footerScores.asReadonly();
+  readonly inBonusStage = this._inBonusStage.asReadonly();
+  readonly usedBonusBuildings = this._usedBonusBuildings.asReadonly();
+  readonly bonusStageBuildings = this._bonusStageBuildings.asReadonly();
+  readonly currentTurnPlacements = this._currentTurnPlacements.asReadonly();
+  readonly firstTurnPlaced = this._firstTurnPlaced.asReadonly();
+  readonly secondTurnPlaced = this._secondTurnPlaced.asReadonly();
+  readonly selectedScoringRow = this._selectedScoringRow.asReadonly();
   
   setSelectedScoringRow(row: number | null): void {
     this._selectedScoringRow.set(row);

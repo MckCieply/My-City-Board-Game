@@ -64,4 +64,14 @@
     [bonusStageBuildings]="bonusStageBuildings()"
     [totalScore]="getTotalScore()">
   </app-game-footer>
+  
+  <!-- Scoreboard when game is complete -->
+  @if (gameComplete()) {
+    <app-scoreboard
+      [footerScores]="footerScores()"
+      [bonusStageRounds]="bonusStageRounds"
+      [plazaBonus]="getPlazaBonus()"
+      (playAgain)="playAgain.emit()">
+    </app-scoreboard>
+  }
 </div>

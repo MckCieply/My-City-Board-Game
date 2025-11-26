@@ -43,8 +43,18 @@
   }
 
   &.current-round {
-    border-color: var(--accent-color);
-    box-shadow: 0 0 5px rgba(var(--accent-rgb), 0.3);
+    border: 2px solid #a855f7;
+    background: rgba(168, 85, 247, 0.15);
+    box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
+    
+    .footer-label {
+      color: #a855f7;
+      font-weight: 700;
+    }
+    
+    .footer-current {
+      color: #a855f7;
+    }
   }
 
   &.bonus-round {

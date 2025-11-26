@@ -15,17 +15,10 @@ export class ScoringService {
   private _currentScoringGroups = signal<Set<string>>(new Set());
   private _showPlazaBonus = signal<boolean>(false);
 
-  get currentScoringStreet() {
-    return this._currentScoringStreet.asReadonly();
-  }
-
-  get currentScoringGroups() {
-    return this._currentScoringGroups.asReadonly();
-  }
-
-  get showPlazaBonus() {
-    return this._showPlazaBonus.asReadonly();
-  }
+  // Expose readonly signals directly
+  readonly currentScoringStreet = this._currentScoringStreet.asReadonly();
+  readonly currentScoringGroups = this._currentScoringGroups.asReadonly();
+  readonly showPlazaBonus = this._showPlazaBonus.asReadonly();
 
   /**
    * Calculate score for a specific street (row) based on dice sum

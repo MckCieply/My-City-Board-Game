@@ -1,113 +1,45 @@
-import { Component, signal, ViewChild } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { DiceComponent } from './components/dice/dice.component';
 import { GameBoardComponent } from './components/game-board/game-board.component';
 import { HeaderComponent } from './components/header/header.component';
-import { ScoreboardComponent } from './components/scoreboard/scoreboard.component';
 import { Buildings, getBuildingFromDice } from './models/buildings.model';
+import { DEFAULT_GAME_CONFIG } from './models/game-config.model';
 import { PlacementState } from './models/placement-state.model';
+import { BoardService } from './services/board.service';
+import { GameStateService } from './services/game-state.service';
+import { ScoringService } from './services/scoring.service';
+import { isBonusStage, isPreparationPhase } from './utils/placement-state.util';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [GameBoardComponent, DiceComponent, HeaderComponent, ScoreboardComponent],
+  imports: [GameBoardComponent, DiceComponent, HeaderComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
 })
 export class AppComponent {
   title = 'my-city-board-game';
 
-  @ViewChild('gameBoard') gameBoard!: GameBoardComponent;
+  // Inject services
+  private gameStateService = inject(GameStateService);
+  private boardService = inject(BoardService);
+  private scoringService = inject(ScoringService);
   
+  // Local state signals
   currentRolls = signal<number[] | null>(null);
   placementState = signal<PlacementState>(PlacementState.PREP_FIRST);
-  selectedBuilding = signal<Buildings | null>(null); // For preparation phase
+  selectedBuilding = signal<Buildings | null>(null);
 
-  /**
-   * Checks if the current dice roll is doubles (same number on both dice)
-   */
-  private isDoublesRoll(rolls: number[]): boolean {
-    return rolls.length === 2 && rolls[0] === rolls[1];
-  }
+  // Computed signals for derived state
+  private isDoublesRoll = computed(() => {
+    const rolls = this.currentRolls();
+    return rolls !== null && rolls.length === 2 && rolls[0] === rolls[1];
+  });
 
-  onDiceRolled(rolls: number[]): void {
-    const currentState = this.placementState();
-    const wasComplete = currentState === PlacementState.COMPLETE;
-    
-    // Clear scoring visualization from previous round
-    if (this.gameBoard) {
-      this.gameBoard.clearScoringVisualization();
-      // Clear turn placements when rolling new dice after completing a round
-      if (wasComplete) {
-        this.gameBoard.clearCurrentTurnPlacements();
-      }
-    }
-    
-    this.currentRolls.set(rolls);
-    
-    const isPreparation = this.isPreparationPhase(currentState);
-    const isBonusStage = this.isBonusStage(currentState);
-    
-    // Don't change state if we're in bonus stage - let bonus logic handle it
-    if (isBonusStage) {
-      return;
-    }
-    
-    // Clear selected building when dice are rolled in prep phase to force new selection
-    if (isPreparation) {
-      this.selectedBuilding.set(null);
-      // In preparation phase, always use regular prep states (no doubles logic)
-      this.placementState.set(PlacementState.PREP_FIRST);
-    } else if (this.isDoublesRoll(rolls)) {
-      this.placementState.set(PlacementState.DOUBLES_FIRST);
-    } else {
-      this.placementState.set(PlacementState.FIRST);
-    }
-  }
+  private isPreparationPhase = computed(() => isPreparationPhase(this.placementState()));
+  private isBonusStage = computed(() => isBonusStage(this.placementState()));
 
-  onPlacementStateChange(state: PlacementState): void {
-    console.log(`Placement state changing to: ${state}`);
-    this.placementState.set(state);
-    
-    // Clear selected building when moving to second prep placement (after first placement)
-    if (state === PlacementState.PREP_SECOND || state === PlacementState.PREP_DOUBLES_SECOND) {
-      this.selectedBuilding.set(null);
-      console.log('First prep placement done, cleared selected building for second placement');
-    }
-    
-    // If entering bonus stage, clear selected building to force new selection
-    if (state === PlacementState.BONUS) {
-      this.selectedBuilding.set(null);
-      console.log('Entered bonus stage, cleared selected building');
-    }
-    
-    // Don't clear dice during bonus stage
-    if (state === PlacementState.BONUS) {
-      console.log('In bonus stage - keeping dice for reference');
-      return; // Don't process any other state changes
-    }
-    
-    // If round is complete, clear dice to prepare for next roll
-    // Keep turn placement indicators visible during scoring
-    if (state === PlacementState.COMPLETE) {
-      console.log('Round complete, clearing dice');
-      
-      // Check if game is complete and show plaza bonus visualization
-      if (this.gameBoard && this.gameBoard.gameComplete()) {
-        this.gameBoard.clearScoringVisualization();
-        this.gameBoard.showPlazaBonusVisualization();
-      }
-      
-      setTimeout(() => {
-        this.currentRolls.set(null);
-        console.log('Dice cleared, ready for new roll');
-      }, 100);
-    }
-  }
-
-  /**
-   * Gets the currently selected building based on dice rolls and placement state
-   */
-  getCurrentSelectedBuilding(): Buildings | null {
+  currentSelectedBuilding = computed(() => {
     const rolls = this.currentRolls();
     const state = this.placementState();
 
@@ -116,160 +48,150 @@ export class AppComponent {
     }
 
     // During preparation phase or bonus stage, use selected building
-    if (this.isPreparationPhase(state) || this.isBonusStage(state)) {
+    if (this.isPreparationPhase() || this.isBonusStage()) {
       return this.selectedBuilding();
     }
 
     // During regular game, use dice-determined buildings
     if (state === PlacementState.FIRST) {
-      // First placement: second die determines building
       return getBuildingFromDice(rolls[1]);
     } else if (state === PlacementState.SECOND) {
-      // Second placement: first die determines building
       return getBuildingFromDice(rolls[0]);
     } else if (state === PlacementState.DOUBLES_FIRST) {
-      // Doubles: building from dice value
       return getBuildingFromDice(rolls[0]);
     } else if (state === PlacementState.DOUBLES_SQUARE) {
-      // Doubles: square
       return Buildings.SQUARE;
     }
     
     return null;
-  }
+  });
 
-  /**
-   * Handles building selection during preparation phase and bonus stages
-   */
-  buildingSelected(building: Buildings): void {
-    const currentState = this.placementState();
-    if (this.isPreparationPhase(currentState) && building !== Buildings.SQUARE) {
-      this.selectedBuilding.set(building);
-    } else if (this.isBonusStage(currentState) && building !== Buildings.SQUARE) {
-      this.selectedBuilding.set(building);
-    }
-  }
-
-  /**
-   * Checks if current state is in preparation phase
-   */
-  private isPreparationPhase(state: PlacementState): boolean {
-    return state === PlacementState.PREP_FIRST ||
-           state === PlacementState.PREP_SECOND ||
-           state === PlacementState.PREP_DOUBLES_FIRST ||
-           state === PlacementState.PREP_DOUBLES_SECOND;
-  }
-
-  /**
-   * Checks if building selection is enabled (during preparation phase or bonus stage)
-   * In prep phase, dice must be rolled first before selection is enabled
-   */
-  isBuildingSelectionEnabled(): boolean {
-    const state = this.placementState();
-    const isPrep = this.isPreparationPhase(state);
-    const isBonus = this.isBonusStage(state);
+  buildingSelectionEnabled = computed(() => {
+    const isPrep = this.isPreparationPhase();
+    const isBonus = this.isBonusStage();
     
-    // In prep phase, require dice to be rolled before enabling selection
     if (isPrep) {
       return this.currentRolls() !== null;
     }
     
-    // Bonus stage always allows selection
     return isBonus;
-  }
+  });
 
-  /**
-   * Checks if current state is bonus stage
-   */
-  private isBonusStage(state: PlacementState): boolean {
-    return state === PlacementState.BONUS;
-  }
-
-  /**
-   * Gets the selected building for the game board component
-   */
-  getSelectedBuildingForPlacement(): Buildings | undefined {
+  selectedBuildingForPlacement = computed(() => {
     const selected = this.selectedBuilding();
-    const currentState = this.placementState();
-    return (this.isPreparationPhase(currentState) || this.isBonusStage(currentState)) ? (selected || undefined) : undefined;
-  }
+    return (this.isPreparationPhase() || this.isBonusStage()) ? (selected || undefined) : undefined;
+  });
 
-  /**
-   * Gets disabled buildings for header component
-   */
-  getDisabledBuildings(): Set<Buildings> {
-    const currentState = this.placementState();
-    const disabled = new Set([Buildings.SQUARE]); // Always disable square
+  disabledBuildings = computed(() => {
+    const disabled = new Set([Buildings.SQUARE]);
     
-    if (this.isBonusStage(currentState)) {
-      // During bonus stage, disable used buildings
-      const usedBuildings = this.getUsedBonusBuildings();
+    if (this.isBonusStage()) {
+      const usedBuildings = this.gameStateService.usedBonusBuildings();
       usedBuildings.forEach(building => disabled.add(building));
     }
     
     return disabled;
-  }
+  });
 
-  /**
-   * Gets used bonus buildings from the game board component
-   */
-  getUsedBonusBuildings(): Set<Buildings> {
-    if (this.gameBoard) {
-      return this.gameBoard.usedBonusBuildings();
-    }
-    return new Set();
-  }
-
-  /**
-   * Determines if dice rolling should be disabled
-   * Dice should be disabled when:
-   * - A round is in progress (dice rolled but placements not complete)
-   * - Game is complete
-   */
-  isDiceRollingDisabled(): boolean {
+  diceRollingDisabled = computed(() => {
     const currentState = this.placementState();
     const hasRolls = this.currentRolls() !== null;
     
-    // If game is complete, disable dice
-    if (this.gameBoard && this.gameBoard.gameComplete()) {
+    if (this.gameStateService.gameComplete()) {
       return true;
     }
     
-    // If we have dice rolls and not in COMPLETE state, disable rolling again
     if (hasRolls && currentState !== PlacementState.COMPLETE) {
       return true;
     }
     
     return false;
-  }
+  });
 
-  /**
-   * Determines if step switching should be disabled
-   * Step switching is disabled during:
-   * - Bonus stages
-   */
-  isStepSwitchingDisabled(): boolean {
+  stepSwitchingDisabled = computed(() => {
     const rolls = this.currentRolls();
+    return !rolls || this.isBonusStage();
+  });
+
+  onDiceRolled(rolls: number[]): void {
     const currentState = this.placementState();
+    const wasComplete = currentState === PlacementState.COMPLETE;
     
-    // Disable if no rolls or during bonus
-    return !rolls || this.isBonusStage(currentState);
+    // Clear scoring visualization from previous round
+    this.scoringService.clearScoringVisualization();
+    if (wasComplete) {
+      this.gameStateService.clearCurrentTurnPlacements();
+    }
+    
+    this.currentRolls.set(rolls);
+    
+    const isPreparation = this.isPreparationPhase();
+    const isBonus = this.isBonusStage();
+    
+    // Don't change state if we're in bonus stage - let bonus logic handle it
+    if (isBonus) {
+      return;
+    }
+    
+    // Clear selected building when dice are rolled in prep phase to force new selection
+    if (isPreparation) {
+      this.selectedBuilding.set(null);
+      this.placementState.set(PlacementState.PREP_FIRST);
+    } else if (this.isDoublesRoll()) {
+      this.placementState.set(PlacementState.DOUBLES_FIRST);
+    } else {
+      this.placementState.set(PlacementState.FIRST);
+    }
   }
 
-  /**
-   * Handles step selection from dice component
-   */
+  onPlacementStateChange(state: PlacementState): void {
+    this.placementState.set(state);
+    
+    // Clear selected building when moving to second prep placement
+    if (state === PlacementState.PREP_SECOND || state === PlacementState.PREP_DOUBLES_SECOND) {
+      this.selectedBuilding.set(null);
+    }
+    
+    // If entering bonus stage, clear selected building
+    if (state === PlacementState.BONUS) {
+      this.selectedBuilding.set(null);
+      return;
+    }
+    
+    // If round is complete, clear dice to prepare for next roll
+    if (state === PlacementState.COMPLETE) {
+      // Check if game is complete and show plaza bonus visualization
+      if (this.gameStateService.gameComplete()) {
+        this.scoringService.clearScoringVisualization();
+        this.scoringService.showPlazaBonusVisualization();
+      }
+      
+      setTimeout(() => {
+        this.currentRolls.set(null);
+      }, 100);
+    }
+  }
+
+  buildingSelected(building: Buildings): void {
+    if (building === Buildings.SQUARE) return;
+    
+    const isPrep = this.isPreparationPhase();
+    const isBonus = this.isBonusStage();
+    
+    if (isPrep || isBonus) {
+      this.selectedBuilding.set(building);
+    }
+  }
+
   onStepSelected(step: 'first' | 'second'): void {
     const rolls = this.currentRolls();
-    const currentState = this.placementState();
     
-    // Only allow step switching during regular game and prep phase (not bonus)
-    if (!rolls || this.isBonusStage(currentState)) {
+    if (!rolls || this.isBonusStage()) {
       return;
     }
     
     // Handle preparation phase (no doubles logic in prep)
-    if (this.isPreparationPhase(currentState)) {
+    if (this.isPreparationPhase()) {
       if (step === 'first') {
         this.placementState.set(PlacementState.PREP_FIRST);
       } else {
@@ -279,8 +201,7 @@ export class AppComponent {
     }
     
     // Handle regular game phase
-    // For doubles, use DOUBLES_FIRST for building, DOUBLES_SQUARE for square
-    if (this.isDoublesRoll(rolls)) {
+    if (this.isDoublesRoll()) {
       if (step === 'first') {
         this.placementState.set(PlacementState.DOUBLES_FIRST);
       } else {
@@ -295,73 +216,29 @@ export class AppComponent {
     }
   }
 
-  /**
-   * Get first turn placed status from game board
-   */
-  getFirstTurnPlaced(): boolean {
-    return this.gameBoard ? this.gameBoard.firstTurnPlaced() : false;
-  }
-
-  /**
-   * Get second turn placed status from game board
-   */
-  getSecondTurnPlaced(): boolean {
-    return this.gameBoard ? this.gameBoard.secondTurnPlaced() : false;
-  }
-
-  /**
-   * Reset current turn placements - removes buildings placed in current roll
-   */
   onResetTurns(): void {
-    if (this.gameBoard) {
-      this.gameBoard.resetCurrentTurnPlacements();
-      // Reset to appropriate first state based on current phase
-      const currentState = this.placementState();
-      if (this.isPreparationPhase(currentState)) {
-        this.placementState.set(PlacementState.PREP_FIRST);
-      } else {
-        this.placementState.set(PlacementState.FIRST);
+    // Remove buildings placed in current turn
+    const placedCells = this.gameStateService.currentTurnPlacements();
+    placedCells.forEach(cellKey => {
+      const [row, col] = cellKey.split('-').map(Number);
+      if (!isNaN(row) && !isNaN(col)) {
+        this.boardService.clearCell(row, col);
       }
-    }
+    });
+    
+    this.gameStateService.clearCurrentTurnPlacements();
+    
+    // Reset to appropriate first state
+    const isPrep = this.isPreparationPhase();
+    this.placementState.set(isPrep ? PlacementState.PREP_FIRST : PlacementState.FIRST);
   }
 
-  /**
-   * Get game complete status from game board
-   */
-  isGameComplete(): boolean {
-    return this.gameBoard ? this.gameBoard.gameComplete() : false;
-  }
-
-  /**
-   * Get footer scores from game board
-   */
-  getFooterScores(): number[] {
-    return this.gameBoard ? this.gameBoard.footerScores() : [];
-  }
-
-  /**
-   * Get bonus stage rounds from game board
-   */
-  getBonusStageRounds(): number[] {
-    return this.gameBoard ? this.gameBoard.bonusStageRounds : [];
-  }
-
-  /**
-   * Get plaza bonus score from game board
-   */
-  getPlazaBonus(): number {
-    return this.gameBoard ? this.gameBoard.getPlazaBonus() : 0;
-  }
-
-  /**
-   * Handle play again action - resets the entire game
-   */
   onPlayAgain(): void {
-    if (this.gameBoard) {
-      this.gameBoard.resetGame();
-      this.currentRolls.set(null);
-      this.placementState.set(PlacementState.PREP_FIRST);
-      this.selectedBuilding.set(null);
-    }
+    this.gameStateService.resetGame(DEFAULT_GAME_CONFIG);
+    this.boardService.resetBoard(DEFAULT_GAME_CONFIG);
+    this.scoringService.clearScoringVisualization();
+    this.currentRolls.set(null);
+    this.placementState.set(PlacementState.PREP_FIRST);
+    this.selectedBuilding.set(null);
   }
 }

@@ -23,6 +23,8 @@
         <div class="footer-score">{{ score }}</div>
       } @else if ($index === currentRound() - 1) {
         <div class="footer-current">•</div>
+      } @else if ($index < currentRound() - 1) {
+        <div class="footer-score">0</div>
       }
     </div>
   }

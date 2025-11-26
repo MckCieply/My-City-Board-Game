@@ -17,11 +17,12 @@ import {
   shouldTrackTurnPlacement,
 } from '../../utils/placement-rules.util';
 import { GameFooterComponent } from '../game-footer/game-footer.component';
+import { ScoreboardComponent } from '../scoreboard/scoreboard.component';
 
 @Component({
   selector: 'app-game-board',
   standalone: true,
-  imports: [LucideAngularModule, GameFooterComponent],
+  imports: [LucideAngularModule, GameFooterComponent, ScoreboardComponent],
   templateUrl: './game-board.component.html',
   styleUrl: './game-board.component.scss',
 })
@@ -39,6 +40,7 @@ export class GameBoardComponent implements OnInit {
   placementState = input<PlacementState>(PlacementState.PREP_FIRST);
   selectedBuilding = input<Buildings | null | undefined>(undefined);
   placementStateChanged = output<PlacementState>();
+  playAgain = output<void>();
 
   // Expose service signals to template
   board = this.boardService.board;

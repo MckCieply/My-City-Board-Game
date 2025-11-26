@@ -4,38 +4,26 @@
       (diceRolled)="onDiceRolled($event)" 
       (stepSelected)="onStepSelected($event)"
       (resetTurns)="onResetTurns()"
-      [disabled]="isDiceRollingDisabled()"
-      [stepSwitchingDisabled]="isStepSwitchingDisabled()"
+      [disabled]="diceRollingDisabled()"
+      [stepSwitchingDisabled]="stepSwitchingDisabled()"
       [placementState]="placementState()"
-      [firstTurnPlaced]="getFirstTurnPlaced()"
-      [secondTurnPlaced]="getSecondTurnPlaced()"
     />
     <app-header
       (buttonClicked)="buildingSelected($event)"
-      [selectedBuilding]="getCurrentSelectedBuilding()"
-      [selectionEnabled]="isBuildingSelectionEnabled()"
-      [disabledBuildings]="getDisabledBuildings()"
+      [selectedBuilding]="currentSelectedBuilding()"
+      [selectionEnabled]="buildingSelectionEnabled()"
+      [disabledBuildings]="disabledBuildings()"
     />
   </div>
   <div class="app_content">
     <div class="app_board">
       <app-game-board
-        #gameBoard
         [currentRolls]="currentRolls()"
         [placementState]="placementState()"
-        [selectedBuilding]="getSelectedBuildingForPlacement()"
+        [selectedBuilding]="selectedBuildingForPlacement()"
         (placementStateChanged)="onPlacementStateChange($event)"
+        (playAgain)="onPlayAgain()"
       />
     </div>
-    @if (isGameComplete()) {
-      <div class="app_scoreboard">
-        <app-scoreboard
-          [footerScores]="getFooterScores()"
-          [bonusStageRounds]="getBonusStageRounds()"
-          [plazaBonus]="getPlazaBonus()"
-          (playAgain)="onPlayAgain()"
-        />
-      </div>
-    }
   </div>
 </div>

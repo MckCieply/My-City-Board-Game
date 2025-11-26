@@ -124,37 +124,7 @@ export function getAllowedColumns(
   return [targetColumn];
 }
 
-/**
- * Determines the allowed column for a placement based on state and rolls
- * @returns column index (0-5) or null if any column is allowed
- * @deprecated Use getAllowedColumns instead for full column fallback logic
- */
-export function getAllowedColumn(
-  state: PlacementState,
-  rolls: number[]
-): number | null {
-  if (rolls.length < 2) return null;
 
-  switch (state) {
-    case PlacementState.PREP_FIRST:
-      return rolls[0] - 1;
-    case PlacementState.PREP_SECOND:
-      return rolls[1] - 1;
-    case PlacementState.PREP_DOUBLES_FIRST:
-    case PlacementState.PREP_DOUBLES_SECOND:
-      return rolls[0] - 1;
-    case PlacementState.FIRST:
-      return rolls[0] - 1;
-    case PlacementState.SECOND:
-      return rolls[1] - 1;
-    case PlacementState.DOUBLES_FIRST:
-      return rolls[0] - 1;
-    case PlacementState.DOUBLES_SQUARE:
-      return null; // Any column allowed
-    default:
-      return null;
-  }
-}
 
 /**
  * Determines which building should be placed based on state, rolls, and selection

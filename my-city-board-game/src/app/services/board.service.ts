@@ -12,18 +12,14 @@ import { GameConfig } from '../models/game-config.model';
 export class BoardService {
   private _board = signal<Board>([]);
 
+  // Expose readonly signal directly
+  readonly board = this._board.asReadonly();
+
   /**
    * Initialize board with given dimensions
    */
   initializeBoard(config: GameConfig): void {
     this._board.set(this.createEmptyBoard(config.rows, config.cols));
-  }
-
-  /**
-   * Get the board signal (read-only)
-   */
-  get board() {
-    return this._board.asReadonly();
   }
 
   /**
